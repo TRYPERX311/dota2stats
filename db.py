@@ -1,6 +1,10 @@
+import time
 from datetime import datetime, timezone
+
 from sqlalchemy import create_engine, Column, BigInteger, Integer, String, DateTime, UniqueConstraint
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import declarative_base, sessionmaker
+
 import config
 DATABASE_URL = f"mysql+pymysql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT}/{config.DB_NAME}?charset=utf8mb4"
 
@@ -91,8 +95,21 @@ class HeroStats(Base):
 # СОЗДАНИЕ ТАБЛИЦ
 # ============================================================
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+def init_db(retries: int = 10, delay: float = 2.0):
+    """Ждём готовности MySQL и создаём таблицы.
+
+    В Docker MySQL может стартовать дольше приложения, поэтому делаем retry.
+    """
+    last_error = None
+    for attempt in range(1, retries + 1):
+        try:
+            Base.metadata.create_all(bind=engine)
+            return
+        except OperationalError as e:
+            last_error = e
+            print(f"[init_db] MySQL не готов (попытка {attempt}/{retries}): {e}")
+            time.sleep(delay)
+    raise last_error
 
 
 # ============================================================
