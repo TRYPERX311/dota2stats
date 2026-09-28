@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Dota 2 Stats</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>🎮 Dota 2 Stats</h1>
+        <div id="auth-block">
+            <a href="/login" id="login-btn">Войти через Steam</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="users-section">
+            <h2>Друзья</h2>
+            <div id="users-list" class="users-grid"></div>
+        </section>
+
+        <section id="stats-section" class="hidden">
+            <h2 id="stats-title">Статистика</h2>
+            <div id="stats-content"></div>
+
+            <h3>Топ героев</h3>
+            <div id="heroes-list" class="heroes-grid"></div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
