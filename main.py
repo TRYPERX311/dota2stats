@@ -6,6 +6,7 @@ import config
 import db
 import steam_auth
 from heroes import get_hero_name, get_hero_image_url
+import collector
 
 app = FastAPI(title="Dota 2 Stats")
 
@@ -63,6 +64,14 @@ def processlogin(request: Request):
             nickname=nickname,
             avatar_url=avatar_url,
         )
+        # 🆕 Новый пользователь — сразу собираем его статистику в фоне,
+        # чтобы он не ждал следующего планового сбора (до 6 часов).
+        import threading
+        threading.Thread(
+            target=collector.collect_for_user,
+            args=(user,),
+            daemon=True,
+        ).start()
     else:
         profile = steam_auth.fetch_steam_profile(steam_id64)
         if profile:
