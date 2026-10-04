@@ -6,8 +6,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
-    ports:
-      - "3307:3306"   # на хосте 3307, чтобы не конфликтовать с локальным MySQL
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -30,7 +28,7 @@ services:
       DB_HOST: db
       DB_PORT: 3306
     ports:
-      - "5000:5000"
+      - "80:5000"
     depends_on:
       db:
         condition: service_healthy
