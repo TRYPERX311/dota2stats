@@ -1,5 +1,8 @@
 # Секреты
 .env
+.env.*
+.env.save*
+*.env
 
 # Python
 __pycache__/
