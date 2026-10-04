@@ -7,6 +7,7 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
 
 # IDE
 .idea/
@@ -17,3 +18,4 @@ Thumbs.db
 
 # Логи
 *.log
+logs/
