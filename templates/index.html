@@ -14,7 +14,7 @@
     </header>
 
     <main>
-        <!-- Три колонки: друзья | центр | пиры -->
+        <!-- Три колонки: друзья | центр | пиры + герои -->
         <div id="player-layout" class="player-layout hidden">
 
             <!-- ЛЕВАЯ КОЛОНКА: Друзья -->
@@ -48,25 +48,30 @@
 
             </div>
 
-            <!-- ПРАВАЯ КОЛОНКА: Пиры -->
+            <!-- ПРАВАЯ КОЛОНКА: Пиры + Герои -->
             <aside class="col-peers">
-                <h2>Сыграно с игроками</h2>
-                <div id="peers-block"></div>
+
+                <!-- Карточка: Пиры -->
+                <div class="card">
+                    <h2>Сыграно с игроками</h2>
+                    <div id="peers-block"></div>
+                </div>
+
+                <!-- Карточка: Герои -->
+                <div class="card">
+                    <div class="heroes-header">
+                        <h2>Герои</h2>
+                        <div class="toggle-group toggle-group--compact">
+                            <button class="toggle-btn active" data-scope="all">Все</button>
+                            <button class="toggle-btn" data-scope="patch">Патч</button>
+                        </div>
+                    </div>
+                    <div id="heroes-list" class="heroes-list-compact"></div>
+                </div>
+
             </aside>
 
         </div>
-
-        <!-- Герои: внизу, во всю ширину -->
-        <section id="heroes-section" class="hidden">
-            <div class="section-header">
-                <h3>Герои</h3>
-                <div class="toggle-group">
-                    <button class="toggle-btn active" data-scope="all">За всё время</button>
-                    <button class="toggle-btn" data-scope="patch">За патч</button>
-                </div>
-            </div>
-            <div id="heroes-list" class="heroes-grid"></div>
-        </section>
     </main>
 
     <script src="/static/app.js"></script>

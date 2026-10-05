@@ -110,7 +110,7 @@ async function loadUsers() {
             container.appendChild(card);
         });
 
-        // ← ВОТ ЭТА СТРОКА: показываем весь блок с колонками
+        // Показываем блок с колонками
         $("player-layout").classList.remove("hidden");
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
@@ -122,7 +122,6 @@ async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
 
     $("player-layout").classList.remove("hidden");
-    $("heroes-section").classList.remove("hidden");
 
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
@@ -304,14 +303,15 @@ async function loadPatch(userId) {
     }
 }
 
+// === Герои (правая колонка, компактный список) ===
 async function loadHeroes(userId, scope) {
     const container = $("heroes-list");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
 
     try {
-        const data = await api(`/stats/${userId}/heroes?scope=${scope}&limit=12`);
+        const data = await api(`/stats/${userId}/heroes?scope=${scope}&limit=10`);
         if (!data.heroes.length) {
-            container.innerHTML = '<div class="loading">Нет данных по героям</div>';
+            container.innerHTML = '<div class="loading">Нет данных</div>';
             return;
         }
 
@@ -324,7 +324,7 @@ async function loadHeroes(userId, scope) {
                 <div class="hero-info">
                     <div class="hero-name">${escapeHtml(h.hero_name)}</div>
                     <div class="hero-stats">
-                        <span>${h.games} игр</span>
+                        <span>${h.games} игр · </span>
                         <span class="winrate ${wrClass(h.winrate)}">${h.winrate}%</span>
                     </div>
                 </div>
@@ -336,7 +336,7 @@ async function loadHeroes(userId, scope) {
     }
 }
 
-// === Пиры (правая колонка) ===
+// === Пиры (правая колонка, компактно) ===
 async function loadPeers(userId) {
     const container = $("peers-block");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
@@ -360,7 +360,7 @@ async function loadPeers(userId) {
                         </div>
                     </div>
                 </div>
-        `;
+            `;
         });
 
         container.innerHTML = `<div class="peers-list">${rows}</div>`;
