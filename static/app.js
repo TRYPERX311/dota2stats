@@ -171,15 +171,14 @@ async function loadStats(userId) {
 
         content.innerHTML = `
             <div class="stat-item">
-                <div class="stat-value">${s.games_total}</div>
-                <div class="stat-label">Всего игр</div>
-                <div class="stat-sub">
-                    <span class="wins">${s.wins_total}</span>–<span class="losses">${s.losses_total}</span>
+                <div class="stat-value stat-wl">
+                    <span class="wins">${s.wins_total}</span><span class="wl-dash">-</span><span class="losses">${s.losses_total}</span>
                 </div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.winrate_total}%</div>
                 <div class="stat-label">Винрейт</div>
+                <div class="stat-sub">${s.games_total} игр</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.avg_kda}</div>

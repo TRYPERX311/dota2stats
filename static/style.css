@@ -224,6 +224,27 @@ h4 {
     font-weight: 700;
     color: #c23c2a;
 }
+/* W-L в общем блоке статистики */
+.stat-value.stat-wl {
+    color: inherit;              /* цвет задаётся через .wins/.losses */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+}
+
+.stat-value.stat-wl .wins {
+    color: #4caf50;
+}
+
+.stat-value.stat-wl .losses {
+    color: #f44336;
+}
+
+.stat-value.stat-wl .wl-dash {
+    color: #666;
+    margin: 0 2px;
+}
 
 .stat-label {
     font-size: 11px;
