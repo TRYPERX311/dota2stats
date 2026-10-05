@@ -270,12 +270,11 @@ h4 {
     font-weight: 600;
 }
 
-/* === РЯД ИЗ ДВУХ КАРТОЧЕК: 20 матчей + За патч === */
+/* === 20 матчей + За патч — друг под другом, во всю ширину === */
 .row-two {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
-    align-items: start;
 }
 
 .row-two .card {
@@ -600,9 +599,6 @@ h4 {
 
 @media (max-width: 750px) {
     .player-layout {
-        grid-template-columns: 1fr;
-    }
-    .row-two {
         grid-template-columns: 1fr;
     }
     .profile-row {
