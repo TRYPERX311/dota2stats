@@ -181,8 +181,8 @@ h4 {
 }
 
 .profile-header .rank-icon {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     object-fit: contain;
     flex-shrink: 0;
 }
@@ -314,7 +314,7 @@ h4 {
 /* === Мини-герои (последние 20 матчей) === */
 .mini-heroes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
 }
 
