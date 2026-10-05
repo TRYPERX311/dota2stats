@@ -157,7 +157,7 @@ h4 {
     white-space: nowrap;
 }
 
-/* === ПРОФИЛЬ + СТАТИСТИКА В ОДНОЙ СТРОКЕ === */
+/* === ПРОФИЛЬ + СТАТИСТИКА В ОДНОЙ СТРОКЕ! === */
 .profile-row {
     display: flex;
     align-items: center;
