@@ -14,16 +14,41 @@
     </header>
 
     <main>
+        <!-- Список друзей -->
         <section id="users-section">
             <h2>Друзья</h2>
             <div id="users-list" class="users-grid"></div>
         </section>
 
+        <!-- Статистика выбранного игрока -->
         <section id="stats-section" class="hidden">
-            <h2 id="stats-title">Статистика</h2>
-            <div id="stats-content"></div>
+            <!-- Шапка профиля -->
+            <div id="profile-header" class="profile-header"></div>
 
-            <h3>Топ героев</h3>
+            <!-- Общая статистика -->
+            <h3>Общая статистика</h3>
+            <div id="stats-content" class="stats-block"></div>
+
+            <!-- Позиции за всё время (по матчам за патч) -->
+            <h3>Позиции</h3>
+            <div id="positions-content" class="positions-grid"></div>
+
+            <!-- Последние 20 матчей -->
+            <h3>Последние 20 матчей</h3>
+            <div id="recent-block"></div>
+
+            <!-- Статистика за патч -->
+            <h3 id="patch-title">Статистика за патч</h3>
+            <div id="patch-block"></div>
+
+            <!-- Топ героев с переключателем -->
+            <div class="section-header">
+                <h3>Герои</h3>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" data-scope="all">За всё время</button>
+                    <button class="toggle-btn" data-scope="patch">За патч</button>
+                </div>
+            </div>
             <div id="heroes-list" class="heroes-grid"></div>
         </section>
     </main>
