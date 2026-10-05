@@ -173,21 +173,18 @@ async function loadStats(userId) {
             <div class="stat-item">
                 <div class="stat-value">${s.games_total}</div>
                 <div class="stat-label">Всего игр</div>
+                <div class="stat-sub">
+                    <span class="wins">${s.wins_total}</span>–<span class="losses">${s.losses_total}</span>
+                </div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.winrate_total}%</div>
                 <div class="stat-label">Винрейт</div>
-                <div class="stat-sub">${s.wins_total}–${s.losses_total}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.avg_kda}</div>
                 <div class="stat-label">Средний KDA</div>
                 <div class="stat-sub">${s.avg_kills} / ${s.avg_deaths} / ${s.avg_assists}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${s.winrate_recent}%</div>
-                <div class="stat-label">Винрейт (последние)</div>
-                <div class="stat-sub">${s.games_recent} игр</div>
             </div>
         `;
     } catch (e) {
