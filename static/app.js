@@ -44,6 +44,13 @@ function escapeHtml(s) {
         .replaceAll('"', "&quot;");
 }
 
+function rankIconUrl(rankTier) {
+    if (!rankTier) return null;
+    const tier = Math.floor(rankTier / 10);
+    if (tier < 1 || tier > 8) return null;
+    return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/icons/ranks/rank_icon_${tier}.png`;
+}
+
 // === Состояние ===
 let currentUser = { id: null, nickname: null };
 let currentScope = "all";
@@ -58,7 +65,6 @@ async function init() {
     }
 
     bindToggle();
-
     await loadUsers();
 }
 
@@ -69,7 +75,6 @@ function showAuthBlock(me) {
     `;
 }
 
-// === Переключатель "За всё время / За патч" ===
 function bindToggle() {
     document.querySelectorAll(".toggle-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -112,34 +117,23 @@ async function loadUsers() {
     }
 }
 
-// === Полная статистика игрока ===
+// === Полная статистика ===
 async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
 
     const section = $("stats-section");
     section.classList.remove("hidden");
 
-    // Сброс содержимого
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
-    $("positions-content").innerHTML = "";
     $("recent-block").innerHTML = "";
     $("patch-block").innerHTML = "";
     $("heroes-list").innerHTML = "";
 
-    // 1. Профиль
     await loadProfile(userId, nickname);
-
-    // 2. Общая статистика + позиции
     await loadStats(userId);
-
-    // 3. Последние 20 матчей
     await loadRecent(userId);
-
-    // 4. За патч
     await loadPatch(userId);
-
-    // 5. Герои (по текущему scope)
     await loadHeroes(userId, currentScope);
 }
 
@@ -150,11 +144,19 @@ async function loadProfile(userId, nickname) {
         const u = data.user;
         const p = data.profile;
 
+        const rankIcon = p ? rankIconUrl(p.rank_tier) : null;
+        const rankIconHtml = rankIcon
+            ? `<img class="rank-icon" src="${rankIcon}" alt="" onerror="this.style.display='none'">`
+            : "";
+
         container.innerHTML = `
-            <img src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
+            <img class="profile-avatar" src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
             <div class="profile-meta">
                 <div class="profile-name">${escapeHtml(u.nickname || nickname || "Игрок")}</div>
-                <div class="profile-rank">${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</div>
+                <div class="profile-rank">
+                    ${rankIconHtml}
+                    <span>${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</span>
+                </div>
                 ${p && p.mmr_estimate ? `<div class="profile-mmr">~ ${p.mmr_estimate} MMR</div>` : ""}
             </div>
         `;
@@ -165,13 +167,11 @@ async function loadProfile(userId, nickname) {
 
 async function loadStats(userId) {
     const content = $("stats-content");
-    const positions = $("positions-content");
 
     try {
         const data = await api(`/stats/${userId}`);
         if (!data.stats) {
             content.innerHTML = `<div class="loading">${escapeHtml(data.message || "Статистика ещё не собрана")}</div>`;
-            positions.innerHTML = "";
             return;
         }
 
@@ -190,208 +190,4 @@ async function loadStats(userId) {
             <div class="stat-item">
                 <div class="stat-value">${s.avg_kda}</div>
                 <div class="stat-label">Средний KDA</div>
-                <div class="stat-sub">${s.avg_kills} / ${s.avg_deaths} / ${s.avg_assists}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">${s.winrate_recent}%</div>
-                <div class="stat-label">Винрейт (последние)</div>
-                <div class="stat-sub">${s.games_recent} игр</div>
-            </div>
-        `;
-
-        // Позиции
-        if (s.positions) {
-            positions.innerHTML = "";
-            ["carry", "mid", "offlane", "support"].forEach(pos => {
-                const p = s.positions[pos];
-                if (!p || p.games === 0) return;
-                const wrClass = p.winrate >= 50 ? "" : "low";
-                positions.innerHTML += `
-                    <div class="position-card">
-                        <div class="position-name">${posLabel(pos)}</div>
-                        <div class="position-games">${p.games} игр</div>
-                        <div class="position-wr ${wrClass}">${p.winrate}%</div>
-                    </div>
-                `;
-            });
-            if (!positions.innerHTML) {
-                positions.innerHTML = '<div class="loading">Нет данных по позициям</div>';
-            }
-        }
-    } catch (e) {
-        content.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
-        positions.innerHTML = "";
-    }
-}
-
-function posLabel(pos) {
-    return { carry: "Carry", mid: "Mid", offlane: "Offlane", support: "Support" }[pos] || pos;
-}
-
-async function loadRecent(userId) {
-    const container = $("recent-block");
-    try {
-        const data = await api(`/stats/${userId}/recent`);
-        if (!data.recent) {
-            container.innerHTML = `<div class="loading">${escapeHtml(data.message || "Нет матчей")}</div>`;
-            return;
-        }
-        const r = data.recent;
-
-        let heroesHtml = "";
-        r.heroes.forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
-            heroesHtml += `
-                <div class="mini-hero">
-                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
-                    <div class="mini-hero-info">
-                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = `
-            <div class="recent-summary">
-                <span class="big">${r.games}</span> игр · винрейт
-                <span class="big ${r.winrate >= 50 ? 'good' : 'bad'}">${r.winrate}%</span>
-                (${r.wins}–${r.games - r.wins})
-            </div>
-            <div class="mini-heroes-grid">${heroesHtml || '<div class="loading">Нет героев</div>'}</div>
-        `;
-    } catch (e) {
-        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
-    }
-}
-
-async function loadPatch(userId) {
-    const title = $("patch-title");
-    const container = $("patch-block");
-
-    try {
-        const data = await api(`/stats/${userId}/patch`);
-        if (!data.patch) {
-            title.textContent = "Статистика за патч";
-            container.innerHTML = `<div class="loading">${escapeHtml(data.message || "Патч неизвестен")}</div>`;
-            return;
-        }
-
-        title.textContent = `Статистика за патч ${data.patch.name}`;
-
-        const s = data.summary;
-
-        // Топ-5 по играм
-        let topByGames = "";
-        (data.heroes_by_games || []).forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
-            topByGames += `
-                <div class="mini-hero">
-                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
-                    <div class="mini-hero-info">
-                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
-                    </div>
-                </div>
-            `;
-        });
-
-        // Топ-5 по винрейту
-        let topByWinrate = "";
-        (data.heroes_by_winrate || []).forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
-            topByWinrate += `
-                <div class="mini-hero">
-                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
-                    <div class="mini-hero-info">
-                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
-                    </div>
-                </div>
-            `;
-        });
-
-        // Позиции за патч
-        let posHtml = "";
-        ["carry", "mid", "offlane", "support"].forEach(pos => {
-            const p = data.positions[pos];
-            if (!p || p.games === 0) return;
-            const wrClass = p.winrate >= 50 ? "" : "low";
-            posHtml += `
-                <div class="position-card">
-                    <div class="position-name">${escapeHtml(p.label)}</div>
-                    <div class="position-games">${p.games} игр</div>
-                    <div class="position-wr ${wrClass}">${p.winrate}%</div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = `
-            <div class="patch-summary">
-                <div class="stat-item">
-                    <div class="stat-value">${s.games}</div>
-                    <div class="stat-label">Игр за патч</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${s.winrate}%</div>
-                    <div class="stat-label">Винрейт</div>
-                    <div class="stat-sub">${s.wins}–${s.games - s.wins}</div>
-                </div>
-            </div>
-
-            <div class="patch-section">
-                <h4>Топ-5 по играм</h4>
-                <div class="mini-heroes-grid">${topByGames || '<div class="loading">Нет данных</div>'}</div>
-            </div>
-
-            <div class="patch-section">
-                <h4>Топ-5 по винрейту (мин. 3 игры)</h4>
-                <div class="mini-heroes-grid">${topByWinrate || '<div class="loading">Нет данных</div>'}</div>
-            </div>
-
-            <div class="patch-section">
-                <h4>По позициям</h4>
-                <div class="positions-grid">${posHtml || '<div class="loading">Нет данных</div>'}</div>
-            </div>
-        `;
-    } catch (e) {
-        title.textContent = "Статистика за патч";
-        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
-    }
-}
-
-async function loadHeroes(userId, scope) {
-    const container = $("heroes-list");
-    container.innerHTML = '<div class="loading">Загрузка...</div>';
-
-    try {
-        const data = await api(`/stats/${userId}/heroes?scope=${scope}&limit=12`);
-        if (!data.heroes.length) {
-            container.innerHTML = '<div class="loading">Нет данных по героям</div>';
-            return;
-        }
-
-        container.innerHTML = "";
-        data.heroes.forEach(h => {
-            const card = document.createElement("div");
-            card.className = "hero-card";
-            const wrClass = h.winrate >= 50 ? "" : "low";
-            card.innerHTML = `
-                <img src="${escapeHtml(h.hero_image || '')}" alt="${escapeHtml(h.hero_name)}" onerror="this.style.display='none'">
-                <div class="hero-info">
-                    <div class="hero-name">${escapeHtml(h.hero_name)}</div>
-                    <div class="hero-stats">
-                        <span>${h.games} игр</span>
-                        <span class="winrate ${wrClass}">${h.winrate}%</span>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (e) {
-        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
-    }
-}
-
-// === Старт ===
-init();
+                <div class="stat-sub">${s.avg_kills} / ${s

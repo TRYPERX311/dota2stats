@@ -9,7 +9,7 @@ import db
 import steam_auth
 import collector
 from heroes import get_hero_name, get_hero_image_url
-from positions import rank_to_str, POSITION_LABELS
+from positions import rank_to_str
 
 
 app = FastAPI(title="Dota 2 Stats")
@@ -27,7 +27,6 @@ db.init_db()
 
 
 def _current_user_id(request: Request) -> int:
-    """Возвращает user_id из сессии или 401, если не залогинен."""
     user_id = request.session.get("user_id")
     if user_id is None:
         raise HTTPException(status_code=401, detail="not_authenticated")
@@ -38,15 +37,7 @@ def _winrate(wins: int, games: int) -> float:
     return round(wins / games * 100, 2) if games else 0.0
 
 
-def _kda(kills_sum: int, deaths_sum: int, assists_sum: int) -> float:
-    """KDA = (kills + assists) / deaths, с защитой от деления на ноль."""
-    if deaths_sum == 0:
-        return float(kills_sum + assists_sum)
-    return round((kills_sum + assists_sum) / deaths_sum, 2)
-
-
 def _hero_rows_to_dict(rows, limit: int | None = None) -> list:
-    """HeroStats-строки → список dict для ответа."""
     if limit is not None:
         rows = rows[:limit]
     result = []
@@ -102,7 +93,6 @@ def processlogin(request: Request):
             nickname=nickname,
             avatar_url=avatar_url,
         )
-        # Нового пользователя — на сбор статистики в фоне
         threading.Thread(
             target=_collect_single_user_bg,
             args=(user.id,),
@@ -118,7 +108,6 @@ def processlogin(request: Request):
 
 
 def _collect_single_user_bg(user_id: int):
-    """Собирает статистику одного пользователя в фоне (после логина)."""
     try:
         user = db.get_user_by_id(user_id)
         if not user:
@@ -172,7 +161,6 @@ def users_list():
 
 @app.get("/profile/{user_id}")
 def profile_by_id(user_id: int):
-    """Профиль: ранг, MMR, ник, аватар, средний KDA, позиции."""
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -219,35 +207,10 @@ def _build_stats_payload(user_id: int):
             "message": "Статистика ещё не собиралась",
         }
 
-    # KDA: в БД хранятся *100 как int
     avg_kills = (stats.avg_kills or 0) / 100
     avg_deaths = (stats.avg_deaths or 0) / 100
     avg_assists = (stats.avg_assists or 0) / 100
     avg_kda = (stats.avg_kda or 0) / 100
-
-    # Позиции (за всё время по матчам за текущий патч)
-    positions = {
-        "carry": {
-            "games": stats.games_carry or 0,
-            "wins": stats.wins_carry or 0,
-            "winrate": _winrate(stats.wins_carry or 0, stats.games_carry or 0),
-        },
-        "mid": {
-            "games": stats.games_mid or 0,
-            "wins": stats.wins_mid or 0,
-            "winrate": _winrate(stats.wins_mid or 0, stats.games_mid or 0),
-        },
-        "offlane": {
-            "games": stats.games_offlane or 0,
-            "wins": stats.wins_offlane or 0,
-            "winrate": _winrate(stats.wins_offlane or 0, stats.games_offlane or 0),
-        },
-        "support": {
-            "games": stats.games_support or 0,
-            "wins": stats.wins_support or 0,
-            "winrate": _winrate(stats.wins_support or 0, stats.games_support or 0),
-        },
-    }
 
     return {
         "user": user.to_dict(),
@@ -269,8 +232,6 @@ def _build_stats_payload(user_id: int):
             "avg_deaths": round(avg_deaths, 2),
             "avg_assists": round(avg_assists, 2),
             "avg_kda": round(avg_kda, 2),
-
-            "positions": positions,
 
             "last_match_at": stats.last_match_at.isoformat() if stats.last_match_at else None,
             "updated_at": stats.updated_at.isoformat() if stats.updated_at else None,
@@ -304,16 +265,7 @@ def heroes_by_id(
     user_id: int,
     limit: int = Query(10, ge=1, le=100),
     scope: str = Query("all", pattern="^(all|patch)$"),
-    position: str = Query("", pattern="^(|carry|mid|offlane|support)$"),
 ):
-    """
-    scope=all   → HeroStats (patch_id=0)
-    scope=patch → HeroStats (patch_id=текущий)
-
-    position — фильтр по позиции (только для scope=patch):
-      пусто       — все
-      carry/mid/offlane/support — только эта позиция
-    """
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -324,15 +276,17 @@ def heroes_by_id(
     else:
         current = db.get_current_patch()
         if not current:
-            return {"user": {"id": user.id, "nickname": user.nickname},
-                    "heroes": [], "meta": {"scope": "patch", "patch": None,
-                                           "message": "Патч ещё не синхронизирован"}}
-        rows = db.get_hero_stats(user_id, patch_id=current.id, position=position)
+            return {
+                "user": {"id": user.id, "nickname": user.nickname},
+                "heroes": [],
+                "meta": {"scope": "patch", "patch": None,
+                         "message": "Патч ещё не синхронизирован"},
+            }
+        rows = db.get_hero_stats(user_id, patch_id=current.id, position="")
         meta = {
             "scope": "patch",
             "patch": {"id": current.id, "name": current.name,
                       "released_at": current.released_at.isoformat()},
-            "position": position or "all",
         }
 
     return {
@@ -348,11 +302,6 @@ def heroes_by_id(
 
 @app.get("/stats/{user_id}/recent")
 def recent_by_id(user_id: int):
-    """
-    Статистика за последние 20 матчей:
-    - суммарный винрейт,
-    - по каждому герою: игры и винрейт.
-    """
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -368,7 +317,6 @@ def recent_by_id(user_id: int):
     games = len(matches)
     wins = sum(m.win for m in matches)
 
-    # Агрегация по героям
     hero_agg: dict[int, dict] = {}
     for m in matches:
         h = hero_agg.setdefault(m.hero_id, {"hero_id": m.hero_id, "games": 0, "wins": 0})
@@ -404,12 +352,6 @@ def recent_by_id(user_id: int):
 
 @app.get("/stats/{user_id}/patch")
 def patch_stats_by_id(user_id: int):
-    """
-    Статистика за текущий патч:
-    - количество игр, суммарный винрейт,
-    - топ-5 героев по играм и винрейту,
-    - разбивка по позициям.
-    """
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")
@@ -426,11 +368,9 @@ def patch_stats_by_id(user_id: int):
     games = len(matches)
     wins = sum(m.win for m in matches)
 
-    # Топ героев за патч
     heroes = db.get_hero_stats(user_id, patch_id=current.id, position="")
     top_by_games = _hero_rows_to_dict(heroes, limit=5)
 
-    # Топ-5 по винрейту (минимум 3 игры, чтобы не было 1-0-статистики)
     candidates = [h for h in heroes if h.games >= 3]
     candidates_sorted = sorted(
         candidates,
@@ -438,19 +378,6 @@ def patch_stats_by_id(user_id: int):
         reverse=True,
     )[:5]
     top_by_winrate = _hero_rows_to_dict(candidates_sorted)
-
-    # Позиции за патч
-    positions = {}
-    for pos in ("carry", "mid", "offlane", "support"):
-        pos_rows = db.get_hero_stats(user_id, patch_id=current.id, position=pos)
-        pos_games = sum(h.games for h in pos_rows)
-        pos_wins = sum(h.wins for h in pos_rows)
-        positions[pos] = {
-            "label": POSITION_LABELS.get(pos, pos),
-            "games": pos_games,
-            "wins": pos_wins,
-            "winrate": _winrate(pos_wins, pos_games),
-        }
 
     return {
         "user": {"id": user.id, "nickname": user.nickname},
@@ -466,7 +393,6 @@ def patch_stats_by_id(user_id: int):
         },
         "heroes_by_games": top_by_games,
         "heroes_by_winrate": top_by_winrate,
-        "positions": positions,
     }
 
 

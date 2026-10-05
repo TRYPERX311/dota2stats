@@ -143,7 +143,7 @@ h4 {
     border-left: 4px solid #c23c2a;
 }
 
-.profile-header img {
+.profile-header .profile-avatar {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -163,9 +163,18 @@ h4 {
 }
 
 .profile-rank {
+    display: flex;
+    align-items: center;
     font-size: 16px;
     color: #c23c2a;
     font-weight: 600;
+}
+
+.rank-icon {
+    width: 36px;
+    height: 36px;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 
 .profile-mmr {
@@ -207,43 +216,6 @@ h4 {
     margin-top: 3px;
 }
 
-/* === Позиции === */
-.positions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-}
-
-.position-card {
-    background: #252525;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-}
-
-.position-name {
-    font-size: 13px;
-    color: #fff;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.position-games {
-    font-size: 11px;
-    color: #777;
-    margin-bottom: 6px;
-}
-
-.position-wr {
-    font-size: 18px;
-    font-weight: 700;
-    color: #4caf50;
-}
-
-.position-wr.low {
-    color: #f44336;
-}
-
 /* === Последние матчи === */
 .recent-summary {
     background: #252525;
@@ -280,12 +252,13 @@ h4 {
     padding: 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .mini-hero img {
-    width: 40px;
+    width: 72px;
     height: 40px;
+    object-fit: cover;
     border-radius: 4px;
     background: #333;
     flex-shrink: 0;

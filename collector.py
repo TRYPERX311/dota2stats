@@ -1,28 +1,12 @@
-"""
-Сбор статистики через OpenDota API.
-
-Логика на одного пользователя:
-1. Профиль: rank_tier, mmr_estimate.
-2. Агрегаты за всё время: wl (win/lose), totals (kills/deaths/assists), heroes.
-3. Последние 20 матчей — для "recent" статистики.
-4. Матчи за текущий патч (limit=500 + фильтр по дате) — детали
-   дотягиваются только для тех, кого ещё нет в БД.
-5. Агрегация и сохранение.
-"""
-
 import time
 from datetime import datetime, timezone
 
 import db
 import opendota
-from positions import lane_role_to_position
 
 
-# Сколько последних матчей считаем "recent"
 RECENT_LIMIT = 20
-# Сколько матчей тянуть за патч
 PATCH_MATCH_LIMIT = 200
-# Сколько запросов деталей матчей в минуту (чтобы не влететь в rate limit)
 DETAILS_THROTTLE_SEC = 1.1
 
 
@@ -37,10 +21,6 @@ def _ts_to_dt(ts: int | None) -> datetime | None:
 
 
 def _wl_from_match(m: dict, account_id: int) -> int | None:
-    """
-    Определяет win/lose для конкретного матча.
-    Возвращает 1 = победа, 0 = поражение, None = не удалось.
-    """
     radiant_win = m.get("radiant_win")
     player_slot = m.get("player_slot")
     if radiant_win is None or player_slot is None:
@@ -54,9 +34,6 @@ def _wl_from_match(m: dict, account_id: int) -> int | None:
 # ============================================================
 
 def sync_patches() -> int | None:
-    """
-    Обновляет справочник патчей. Возвращает id текущего патча или None.
-    """
     patches_raw = opendota.fetch_patches()
     if not patches_raw:
         print("[collector] Не удалось получить список патчей")
@@ -93,7 +70,6 @@ def sync_patches() -> int | None:
 # ============================================================
 
 def collect_profile(user_id: int, account_id: int) -> dict:
-    """Профиль: ранг, MMR. Возвращает поля для PlayerStats."""
     profile = opendota.fetch_player(account_id)
     if not profile:
         return {}
@@ -104,7 +80,6 @@ def collect_profile(user_id: int, account_id: int) -> dict:
 
 
 def collect_all_time_stats(user_id: int, account_id: int) -> dict:
-    """Агрегаты за всё время: wl, totals (KDA), игры по позициям из matches."""
     fields: dict = {}
 
     wl = opendota.fetch_wl(account_id)
@@ -140,10 +115,6 @@ def collect_all_time_stats(user_id: int, account_id: int) -> dict:
 
 
 def collect_hero_stats_all_time(user_id: int, account_id: int) -> int:
-    """
-    Топ героев за всё время. Сохраняет в HeroStats (patch_id=0, position='').
-    Возвращает число героев.
-    """
     heroes_raw = opendota.fetch_hero_stats(account_id)
     if not heroes_raw:
         return 0
@@ -162,10 +133,6 @@ def collect_hero_stats_all_time(user_id: int, account_id: int) -> int:
 
 
 def collect_recent(user_id: int, account_id: int) -> dict:
-    """
-    Последние RECENT_LIMIT матчей: считает games_recent / wins_recent.
-    Не трогает детали (kda) — для этого есть патч.
-    """
     matches = opendota.fetch_recent_matches(account_id, limit=RECENT_LIMIT)
     if not matches:
         return {}
@@ -194,16 +161,6 @@ def collect_recent(user_id: int, account_id: int) -> dict:
 
 
 def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt: datetime) -> dict:
-    """
-    Матчи за текущий патч:
-    1. Тянем список матчей (limit=500), фильтруем по дате.
-    2. Для тех, чьих деталей нет в БД, тянем /matches/{id} (с троттлингом).
-    3. Сохраняем/обновляем Match.
-    4. Считаем агрегаты по патчу: hero_stats и позиции.
-
-    Возвращает поля для PlayerStats (games_carry/wins_carry/...), посчитанные
-    по данным за патч.
-    """
     since_ts = int(patch_dt.replace(tzinfo=timezone.utc).timestamp())
     matches_raw = opendota.fetch_matches_for_patch(
         account_id, since_ts=since_ts, limit=PATCH_MATCH_LIMIT
@@ -214,7 +171,6 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
 
     existing_ids = db.get_existing_match_ids(user_id)
 
-    # Куда складывать новые детали, а куда — базовые строки без деталей
     new_matches: list[dict] = []
     detail_match_ids: list[int] = []
 
@@ -236,16 +192,13 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
         }
 
         if match_id in existing_ids:
-            # Уже есть — возможно, без деталей. Тянем детали, если не заполнены.
             continue
         new_matches.append(base)
         detail_match_ids.append(match_id)
 
-    # Вставляем базовые строки
     inserted = db.insert_matches(user_id, new_matches)
     print(f"[collector] [{account_id}] Новых базовых матчей: {inserted}")
 
-    # Дотягиваем детали для вставленных
     detailed = 0
     for match_id in detail_match_ids:
         detail = opendota.fetch_match_detail(match_id)
@@ -263,17 +216,13 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
             time.sleep(DETAILS_THROTTLE_SEC)
             continue
 
-        lane_role = player.get("lane_role")
         details_update = {
             "kills": player.get("kills"),
             "deaths": player.get("deaths"),
             "assists": player.get("assists"),
-            "lane_role": lane_role,
-            "position": lane_role_to_position(lane_role),
             "gold_per_min": player.get("gold_per_min"),
             "xp_per_min": player.get("xp_per_min"),
         }
-        # Если в деталях есть patch — уточняем
         if detail.get("patch"):
             details_update["patch_id"] = detail["patch"]
 
@@ -283,70 +232,24 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
 
     print(f"[collector] [{account_id}] Загружено деталей: {detailed}")
 
-    # Агрегируем из БД: hero_stats + позиции за патч
     return _aggregate_patch(user_id, patch_id)
 
 
 def _aggregate_patch(user_id: int, patch_id: int) -> dict:
-    """
-    Считает по матчам пользователя за патч:
-    - hero_stats (patch_id, position='')
-    - hero_stats по позициям (patch_id, position=carry/mid/offlane/support)
-    - games_carry/wins_carry/... для PlayerStats
-    """
     matches = db.get_user_matches_by_patch(user_id, patch_id, limit=1000)
-
     if not matches:
         return {}
 
-    # Все герои за патч
     hero_all: dict[int, dict] = {}
-    # Герои по позициям
-    hero_by_pos: dict[str, dict[int, dict]] = {}
-    # Счётчики по позициям
-    pos_games: dict[str, int] = {"carry": 0, "mid": 0, "offlane": 0, "support": 0}
-    pos_wins: dict[str, int] = {"carry": 0, "mid": 0, "offlane": 0, "support": 0}
-
     for m in matches:
-        # Все герои
         h = hero_all.setdefault(m.hero_id, {"hero_id": m.hero_id, "games": 0, "wins": 0})
         h["games"] += 1
         h["wins"] += m.win
 
-        # По позиции
-        pos = m.position
-        if pos in pos_games:
-            pos_games[pos] += 1
-            pos_wins[pos] += m.win
-            bucket = hero_by_pos.setdefault(pos, {})
-            hp = bucket.setdefault(m.hero_id, {"hero_id": m.hero_id, "games": 0, "wins": 0})
-            hp["games"] += 1
-            hp["wins"] += m.win
-
-    # Сохраняем "все герои за патч"
     heroes_sorted = sorted(hero_all.values(), key=lambda x: x["games"], reverse=True)
     db.replace_hero_stats(user_id, patch_id=patch_id, position="", heroes=heroes_sorted)
 
-    # Сохраняем "герои по позициям за патч"
-    for pos in ("carry", "mid", "offlane", "support"):
-        bucket = hero_by_pos.get(pos)
-        if not bucket:
-            db.replace_hero_stats(user_id, patch_id=patch_id, position=pos, heroes=[])
-            continue
-        rows = sorted(bucket.values(), key=lambda x: x["games"], reverse=True)
-        db.replace_hero_stats(user_id, patch_id=patch_id, position=pos, heroes=rows)
-
-    # Возвращаем поля для PlayerStats
-    return {
-        "games_carry": pos_games["carry"],
-        "wins_carry": pos_wins["carry"],
-        "games_mid": pos_games["mid"],
-        "wins_mid": pos_wins["mid"],
-        "games_offlane": pos_games["offlane"],
-        "wins_offlane": pos_wins["offlane"],
-        "games_support": pos_games["support"],
-        "wins_support": pos_wins["support"],
-    }
+    return {}
 
 
 # ============================================================
@@ -358,25 +261,17 @@ def collect_for_user(user, current_patch_id: int | None, current_patch_dt: datet
 
     stats_fields: dict = {}
 
-    # 1. Профиль
     stats_fields.update(collect_profile(user.id, user.account_id))
-
-    # 2. За всё время
     stats_fields.update(collect_all_time_stats(user.id, user.account_id))
+
     heroes_count = collect_hero_stats_all_time(user.id, user.account_id)
     print(f"[collector] [{user.account_id}] Героев за всё время: {heroes_count}")
 
-    # 3. Последние 20
     stats_fields.update(collect_recent(user.id, user.account_id))
 
-    # 4. За текущий патч
     if current_patch_id and current_patch_dt:
-        patch_fields = collect_patch_matches(
-            user.id, user.account_id, current_patch_id, current_patch_dt
-        )
-        stats_fields.update(patch_fields)
+        collect_patch_matches(user.id, user.account_id, current_patch_id, current_patch_dt)
 
-    # 5. Сохраняем PlayerStats
     if stats_fields:
         db.upsert_player_stats(user.id, stats_fields)
 
@@ -384,14 +279,9 @@ def collect_for_user(user, current_patch_id: int | None, current_patch_dt: datet
     print(f"[collector] === {user.nickname}: готово ===")
 
 
-# ============================================================
-# ЗАПУСК
-# ============================================================
-
 def run():
     print(f"[collector] Старт сбора: {datetime.now(timezone.utc)}")
 
-    # Синхронизируем патчи
     current_patch_id = sync_patches()
     current_patch = db.get_current_patch()
     current_patch_dt = current_patch.released_at if current_patch else None
@@ -406,7 +296,6 @@ def run():
             print(f"[collector] Ошибка для {user.nickname}: {e}")
             import traceback
             traceback.print_exc()
-        # Пауза между пользователями
         if i < len(users) - 1:
             time.sleep(2.0)
 
