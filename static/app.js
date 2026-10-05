@@ -109,6 +109,9 @@ async function loadUsers() {
             card.addEventListener("click", () => loadFullStats(u.id, u.nickname));
             container.appendChild(card);
         });
+
+        // ← ВОТ ЭТА СТРОКА: показываем весь блок с колонками
+        $("player-layout").classList.remove("hidden");
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
