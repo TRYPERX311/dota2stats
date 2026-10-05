@@ -314,7 +314,7 @@ h4 {
 /* === Мини-герои (последние 20 матчей) === */
 .mini-heroes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 8px;
 }
 
@@ -332,7 +332,7 @@ h4 {
 }
 
 .mini-hero img {
-    width: 60%;
+    width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     background: #333;

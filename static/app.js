@@ -47,11 +47,13 @@ function escapeHtml(s) {
 function wrClass(winrate) {
     return winrate >= 50 ? "" : "low";
 }
+
 function rankIconUrl(rankTier) {
     if (!rankTier) return null;
     const tier = Math.floor(rankTier / 10);
     if (tier < 1 || tier > 8) return null;
-    return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/icons/ranks/rank_icon_${tier}.png`;
+    // Используем CDN OpenDota — он стабильнее прямых ссылок Steam
+    return `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${tier}.png`;
 }
 
 // === Состояние ===
