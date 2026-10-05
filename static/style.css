@@ -42,9 +42,9 @@ h1 {
 }
 
 main {
-    max-width: 1400px;
-    margin: 30px auto;
-    padding: 0 20px;
+    max-width: 1920px;
+    margin: 20px auto;
+    padding: 0 16px;
 }
 
 .hidden {
@@ -76,7 +76,7 @@ h4 {
 /* === ОСНОВНАЯ СЕТКА: 3 КОЛОНКИ === */
 .player-layout {
     display: grid;
-    grid-template-columns: 220px 1fr 270px;
+    grid-template-columns: 220px 1fr 220px;
     gap: 20px;
     align-items: start;
 }
