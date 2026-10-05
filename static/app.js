@@ -147,7 +147,6 @@ async function loadProfile(userId, nickname) {
             <div class="profile-meta">
                 <div class="profile-name">${escapeHtml(u.nickname || nickname || "Игрок")}</div>
                 <div class="profile-rank">${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</div>
-                ${p && p.mmr_estimate ? `<div class="profile-mmr">~ ${p.mmr_estimate} MMR</div>` : ""}
             </div>
         `;
     } catch (e) {
