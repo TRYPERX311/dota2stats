@@ -356,11 +356,11 @@ async function loadPeers(userId) {
                     <div class="peer-info">
                         <div class="peer-name">${escapeHtml(p.nickname || "Без ника")}</div>
                         <div class="peer-stats">
-                            ${p.with_games} игр · <span class="wr ${wrClass(p.winrate)}">${p.winrate}%</span>
+                            <span class="peer-games-count">${p.with_games} игр</span> · <span class="wr ${wrClass(p.winrate)}">${p.winrate}%</span>
                         </div>
                     </div>
                 </div>
-            `;
+        `;
         });
 
         container.innerHTML = `<div class="peers-list">${rows}</div>`;
