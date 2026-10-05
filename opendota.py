@@ -182,3 +182,10 @@ def fetch_patches() -> list | None:
     if not data:
         return None
     return sorted(data, key=lambda p: p.get("date") or "")
+
+def fetch_peers(account_id: int) -> list | None:
+    """
+    Список сокомандников: [{account_id, with_games, with_win, last_played}, ...]
+    Отсортирован по числу совместных игр (OpenDota отдаёт уже отсортированным).
+    """
+    return _get(f"/players/{account_id}/peers", ttl=3600)

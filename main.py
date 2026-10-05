@@ -468,7 +468,32 @@ def patch_stats_by_id(user_id: int):
         "heroes_by_winrate": top_by_winrate,
         "positions": positions,
     }
+# ============================================================
+# API: СОКОМАНДНИКИ
+# ============================================================
 
+@app.get("/stats/{user_id}/peers")
+def peers_by_id(user_id: int, limit: int = Query(5, ge=1, le=20)):
+    user = db.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user_not_found")
+
+    peers = db.get_peers(user_id, limit=limit)
+    return {
+        "user": {"id": user.id, "nickname": user.nickname},
+        "peers": [
+            {
+                "account_id": p.peer_account_id,
+                "nickname": p.peer_nickname,
+                "avatar": p.peer_avatar,
+                "with_games": p.with_games,
+                "with_win": p.with_win,
+                "winrate": _winrate(p.with_win, p.with_games),
+                "last_played": p.last_played.isoformat() if p.last_played else None,
+            }
+            for p in peers
+        ],
+    }
 
 # ============================================================
 # ЗАПУСК (для локальной разработки)

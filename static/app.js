@@ -125,12 +125,14 @@ async function loadFullStats(userId, nickname) {
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
     $("recent-block").innerHTML = "";
+    $("peers-block").innerHTML = "";
     $("patch-block").innerHTML = "";
     $("heroes-list").innerHTML = "";
 
     await loadProfile(userId, nickname);
     await loadStats(userId);
     await loadRecent(userId);
+    await loadPeers(userId);
     await loadPatch(userId);
     await loadHeroes(userId, currentScope);
 }
@@ -330,6 +332,34 @@ async function loadHeroes(userId, scope) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
 }
+async function loadPeers(userId) {
+    const container = $("peers-block");
+    container.innerHTML = '<div class="loading">Загрузка...</div>';
 
+    try {
+        const data = await api(`/stats/${userId}/peers?limit=5`);
+        if (!data.peers.length) {
+            container.innerHTML = '<div class="loading">Нет данных</div>';
+            return;
+        }
+
+        let rows = "";
+        data.peers.forEach(p => {
+            const wrClass = p.winrate >= 50 ? "" : "low";
+            rows += `
+                <div class="peer-row">
+                    <img src="${escapeHtml(p.avatar || '')}" alt="" onerror="this.style.display='none'">
+                    <div class="peer-name">${escapeHtml(p.nickname || "Без ника")}</div>
+                    <div class="peer-games">${p.with_games} игр</div>
+                    <div class="peer-wr ${wrClass}">${p.winrate}%</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = `<div class="peers-table">${rows}</div>`;
+    } catch (e) {
+        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
 // === Старт ===
 init();

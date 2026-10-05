@@ -24,6 +24,7 @@ RECENT_LIMIT = 20
 PATCH_MATCH_LIMIT = 200
 # Сколько запросов деталей матчей в минуту (чтобы не влететь в rate limit)
 DETAILS_THROTTLE_SEC = 1.1
+PEERS_LIMIT = 5
 
 
 # ============================================================
@@ -352,6 +353,41 @@ def _aggregate_patch(user_id: int, patch_id: int) -> dict:
 # ============================================================
 # ГЛАВНАЯ ФУНКЦИЯ НА ПОЛЬЗОВАТЕЛЯ
 # ============================================================
+def collect_peers(user_id: int, account_id: int) -> int:
+    """
+    Топ-5 сокомандников. Для каждого подтягивает ник и аватар.
+    Возвращает число сохранённых.
+    """
+    raw = opendota.fetch_peers(account_id)
+    if not raw:
+        return 0
+
+    # Сортируем по числу совместных игр, берём топ-5
+    sorted_peers = sorted(
+        raw,
+        key=lambda p: p.get("with_games") or 0,
+        reverse=True,
+    )[:PEERS_LIMIT]
+
+    rows = []
+    for p in sorted_peers:
+        peer_account_id = p.get("account_id")
+        if not peer_account_id:
+            continue
+
+        profile = opendota.fetch_player(peer_account_id)
+        rows.append({
+            "peer_account_id": peer_account_id,
+            "peer_nickname": (profile or {}).get("personaname"),
+            "peer_avatar": (profile or {}).get("avatarfull"),
+            "with_games": p.get("with_games") or 0,
+            "with_win": p.get("with_win") or 0,
+            "last_played": _ts_to_dt(p.get("last_played")),
+        })
+
+    db.replace_peers(user_id, rows)
+    print(f"[collector] [{account_id}] Сокомандников: {len(rows)}")
+    return len(rows)
 
 def collect_for_user(user, current_patch_id: int | None, current_patch_dt: datetime | None):
     print(f"[collector] === {user.nickname} (account_id={user.account_id}) ===")
@@ -368,6 +404,7 @@ def collect_for_user(user, current_patch_id: int | None, current_patch_dt: datet
 
     # 3. Последние 20
     stats_fields.update(collect_recent(user.id, user.account_id))
+    collect_peers(user.id, user.account_id)
 
     # 4. За текущий патч
     if current_patch_id and current_patch_dt:
