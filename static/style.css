@@ -611,6 +611,9 @@ h4 {
         align-items: flex-start;
         gap: 15px;
     }
+     .mini-heroes-grid {
+        grid-template-columns: repeat(2, 1fr);
+     }
     .stats-block {
         width: 100%;
         grid-template-columns: repeat(2, 1fr);
