@@ -156,7 +156,23 @@ class HeroStats(Base):
             name="uq_user_hero_patch_pos",
         ),
     )
+class Peer(Base):
+    """Сокомандник: с кем игрок чаще всего играл в одной команде."""
+    __tablename__ = "peers"
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    peer_account_id = Column(Integer, nullable=False, index=True)
+    peer_nickname = Column(String(255), nullable=True)
+    peer_avatar = Column(String(512), nullable=True)
+    with_games = Column(Integer, default=0)
+    with_win = Column(Integer, default=0)
+    last_played = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=_now, onupdate=_now)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "peer_account_id", name="uq_user_peer"),
+    )
 
 # ============================================================
 # СОЗДАНИЕ ТАБЛИЦ
@@ -424,4 +440,30 @@ def replace_hero_stats(user_id: int, patch_id: int, position: str, heroes: list)
                 position=position,
                 **h,
             ))
+        session.commit()
+# ============================================================
+# PEERS
+# ============================================================
+
+def get_peers(user_id: int, limit: int = 5):
+    with SessionLocal() as session:
+        return (
+            session.query(Peer)
+            .filter(Peer.user_id == user_id)
+            .order_by(Peer.with_games.desc())
+            .limit(limit)
+            .all()
+        )
+
+
+def replace_peers(user_id: int, peers: list):
+    """
+    Полностью заменяет набор peers для пользователя.
+    peers: [{"peer_account_id", "peer_nickname", "peer_avatar",
+             "with_games", "with_win", "last_played"}, ...]
+    """
+    with SessionLocal() as session:
+        session.query(Peer).filter(Peer.user_id == user_id).delete()
+        for p in peers:
+            session.add(Peer(user_id=user_id, **p))
         session.commit()

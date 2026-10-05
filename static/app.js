@@ -44,11 +44,16 @@ function escapeHtml(s) {
         .replaceAll('"', "&quot;");
 }
 
+function wrClass(winrate) {
+    return winrate >= 50 ? "" : "low";
+}
+
 function rankIconUrl(rankTier) {
     if (!rankTier) return null;
     const tier = Math.floor(rankTier / 10);
     if (tier < 1 || tier > 8) return null;
-    return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/icons/ranks/rank_icon_${tier}.png`;
+    // Используем CDN OpenDota — он стабильнее прямых ссылок Steam
+    return `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${tier}.png`;
 }
 
 // === Состояние ===
@@ -86,7 +91,7 @@ function bindToggle() {
     });
 }
 
-// === Пользователи ===
+// === Пользователи (левая колонка) ===
 async function loadUsers() {
     const container = $("users-list");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
@@ -94,7 +99,7 @@ async function loadUsers() {
     try {
         const users = await api("/users");
         if (!users.length) {
-            container.innerHTML = '<div class="loading">Пока никого нет. Авторизуйся первым!</div>';
+            container.innerHTML = '<div class="loading">Пока никого нет</div>';
             return;
         }
 
@@ -106,12 +111,15 @@ async function loadUsers() {
                 <img src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
                 <div class="user-meta">
                     <div class="name">${escapeHtml(u.nickname || "Без ника")}</div>
-                    <div class="updated-small">обновлено ${timeAgo(u.last_updated)}</div>
+                    <div class="updated-small">${timeAgo(u.last_updated)}</div>
                 </div>
             `;
             card.addEventListener("click", () => loadFullStats(u.id, u.nickname));
             container.appendChild(card);
         });
+
+        // Показываем блок с колонками
+        $("player-layout").classList.remove("hidden");
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
@@ -121,18 +129,19 @@ async function loadUsers() {
 async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
 
-    const section = $("stats-section");
-    section.classList.remove("hidden");
+    $("player-layout").classList.remove("hidden");
 
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
     $("recent-block").innerHTML = "";
+    $("peers-block").innerHTML = "";
     $("patch-block").innerHTML = "";
     $("heroes-list").innerHTML = "";
 
     await loadProfile(userId, nickname);
     await loadStats(userId);
     await loadRecent(userId);
+    await loadPeers(userId);
     await loadPatch(userId);
     await loadHeroes(userId, currentScope);
 }
@@ -153,12 +162,9 @@ async function loadProfile(userId, nickname) {
             <img class="profile-avatar" src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
             <div class="profile-meta">
                 <div class="profile-name">${escapeHtml(u.nickname || nickname || "Игрок")}</div>
-                <div class="profile-rank">
-                    ${rankIconHtml}
-                    <span>${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</span>
-                </div>
-                ${p && p.mmr_estimate ? `<div class="profile-mmr">~ ${p.mmr_estimate} MMR</div>` : ""}
+                <div class="profile-rank">${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</div>
             </div>
+            ${rankIconHtml}
         `;
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка профиля: ${escapeHtml(e.message)}</div>`;
@@ -179,15 +185,200 @@ async function loadStats(userId) {
 
         content.innerHTML = `
             <div class="stat-item">
-                <div class="stat-value">${s.games_total}</div>
+                <div class="stat-value stat-wl">
+                    <span class="wins">${s.wins_total}</span><span class="wl-dash">-</span><span class="losses">${s.losses_total}</span>
+                </div>
                 <div class="stat-label">Всего игр</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.winrate_total}%</div>
                 <div class="stat-label">Винрейт</div>
-                <div class="stat-sub">${s.wins_total}–${s.losses_total}</div>
+                <div class="stat-sub">${s.games_total} игр</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">${s.avg_kda}</div>
                 <div class="stat-label">Средний KDA</div>
-                <div class="stat-sub">${s.avg_kills} / ${s
+                <div class="stat-sub">${s.avg_kills} / ${s.avg_deaths} / ${s.avg_assists}</div>
+            </div>
+        `;
+    } catch (e) {
+        content.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+async function loadRecent(userId) {
+    const container = $("recent-block");
+    try {
+        const data = await api(`/stats/${userId}/recent`);
+        if (!data.recent) {
+            container.innerHTML = `<div class="loading">${escapeHtml(data.message || "Нет матчей")}</div>`;
+            return;
+        }
+        const r = data.recent;
+
+        let heroesHtml = "";
+        r.heroes.forEach(h => {
+            heroesHtml += `
+                <div class="mini-hero">
+                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
+                    <div class="mini-hero-info">
+                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = `
+            <div class="recent-summary">
+                <span class="big">${r.games}</span> игр · винрейт
+                <span class="big ${wrClass(r.winrate)}">${r.winrate}%</span>
+                (${r.wins}–${r.games - r.wins})
+            </div>
+            <div class="mini-heroes-grid">${heroesHtml || '<div class="loading">Нет героев</div>'}</div>
+        `;
+    } catch (e) {
+        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+async function loadPatch(userId) {
+    const title = $("patch-title");
+    const container = $("patch-block");
+
+    try {
+        const data = await api(`/stats/${userId}/patch`);
+        if (!data.patch) {
+            title.textContent = "Статистика за патч";
+            container.innerHTML = `<div class="loading">${escapeHtml(data.message || "Патч неизвестен")}</div>`;
+            return;
+        }
+
+        title.textContent = `Статистика за патч ${data.patch.name}`;
+
+        const s = data.summary;
+
+        let topByGames = "";
+        (data.heroes_by_games || []).forEach(h => {
+            topByGames += `
+                <div class="mini-hero">
+                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
+                    <div class="mini-hero-info">
+                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        let topByWinrate = "";
+        (data.heroes_by_winrate || []).forEach(h => {
+            topByWinrate += `
+                <div class="mini-hero">
+                    <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
+                    <div class="mini-hero-info">
+                        <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = `
+            <div class="patch-summary">
+                <div class="stat-item">
+                    <div class="stat-value">${s.games}</div>
+                    <div class="stat-label">Игр за патч</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${s.winrate}%</div>
+                    <div class="stat-label">Винрейт</div>
+                    <div class="stat-sub">${s.wins}–${s.games - s.wins}</div>
+                </div>
+            </div>
+
+            <div class="patch-tops">
+                <div class="patch-section">
+                    <h4>Топ-5 по играм</h4>
+                    <div class="mini-heroes-grid">${topByGames || '<div class="loading">Нет данных</div>'}</div>
+                </div>
+                <div class="patch-section">
+                    <h4>Топ-5 по винрейту</h4>
+                    <div class="mini-heroes-grid">${topByWinrate || '<div class="loading">Нет данных</div>'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        title.textContent = "Статистика за патч";
+        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+// === Герои (правая колонка, компактный список) ===
+async function loadHeroes(userId, scope) {
+    const container = $("heroes-list");
+    container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        const data = await api(`/stats/${userId}/heroes?scope=${scope}&limit=10`);
+        if (!data.heroes.length) {
+            container.innerHTML = '<div class="loading">Нет данных</div>';
+            return;
+        }
+
+        container.innerHTML = "";
+        data.heroes.forEach(h => {
+            const card = document.createElement("div");
+            card.className = "hero-card";
+            card.innerHTML = `
+                <img src="${escapeHtml(h.hero_image || '')}" alt="${escapeHtml(h.hero_name)}" onerror="this.style.display='none'">
+                <div class="hero-info">
+                    <div class="hero-name">${escapeHtml(h.hero_name)}</div>
+                    <div class="hero-stats">
+                        <span>${h.games} игр · </span>
+                        <span class="winrate ${wrClass(h.winrate)}">${h.winrate}%</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) {
+        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+// === Пиры (правая колонка, компактно) ===
+async function loadPeers(userId) {
+    const container = $("peers-block");
+    container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        const data = await api(`/stats/${userId}/peers?limit=5`);
+        if (!data.peers.length) {
+            container.innerHTML = '<div class="loading">Нет данных</div>';
+            return;
+        }
+
+        let rows = "";
+        data.peers.forEach(p => {
+            rows += `
+                <div class="peer-row">
+                    <img src="${escapeHtml(p.avatar || '')}" alt="" onerror="this.style.display='none'">
+                    <div class="peer-info">
+                        <div class="peer-name">${escapeHtml(p.nickname || "Без ника")}</div>
+                        <div class="peer-stats">
+                            <span class="peer-games-count">${p.with_games} игр</span> · <span class="wr ${wrClass(p.winrate)}">${p.winrate}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = `<div class="peers-list">${rows}</div>`;
+    } catch (e) {
+        container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+// === Старт ===
+init();

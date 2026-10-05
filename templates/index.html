@@ -2,7 +2,6 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="google-site-verification" content="lK_Altfxdpcy019xv1Xa4SS_XCmOGQ0Dr1JlF4uTpD0" />
     <title>Dota 2 Stats</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -15,32 +14,64 @@
     </header>
 
     <main>
-        <section id="users-section">
-            <h2>Друзья</h2>
-            <div id="users-list" class="users-grid"></div>
-        </section>
+        <!-- Три колонки: друзья | центр | пиры + герои -->
+        <div id="player-layout" class="player-layout hidden">
 
-        <section id="stats-section" class="hidden">
-            <div id="profile-header" class="profile-header"></div>
+            <!-- ЛЕВАЯ КОЛОНКА: Друзья -->
+            <aside class="col-users">
+                <h2>Друзья</h2>
+                <div id="users-list" class="users-list"></div>
+            </aside>
 
-            <h3>Общая статистика</h3>
-            <div id="stats-content" class="stats-block"></div>
+            <!-- ЦЕНТР -->
+            <div class="col-main">
 
-            <h3>Последние 20 матчей</h3>
-            <div id="recent-block"></div>
-
-            <h3 id="patch-title">Статистика за патч</h3>
-            <div id="patch-block"></div>
-
-            <div class="section-header">
-                <h3>Герои</h3>
-                <div class="toggle-group">
-                    <button class="toggle-btn active" data-scope="all">За всё время</button>
-                    <button class="toggle-btn" data-scope="patch">За патч</button>
+                <!-- Профиль + Общая статистика (одна строка) -->
+                <div class="card">
+                    <div class="profile-row">
+                        <div id="profile-header" class="profile-header"></div>
+                        <div id="stats-content" class="stats-block"></div>
+                    </div>
                 </div>
+
+                <!-- 20 матчей + За патч -->
+                <div class="row-two">
+                    <div class="card">
+                        <h3>Последние 20 матчей</h3>
+                        <div id="recent-block"></div>
+                    </div>
+                    <div class="card">
+                        <h3 id="patch-title">Статистика за патч</h3>
+                        <div id="patch-block"></div>
+                    </div>
+                </div>
+
             </div>
-            <div id="heroes-list" class="heroes-grid"></div>
-        </section>
+
+            <!-- ПРАВАЯ КОЛОНКА: Пиры + Герои -->
+            <aside class="col-peers">
+
+                <!-- Карточка: Пиры -->
+                <div class="card">
+                    <h2>Сыграно с игроками</h2>
+                    <div id="peers-block"></div>
+                </div>
+
+                <!-- Карточка: Герои -->
+                <div class="card">
+                    <div class="heroes-header">
+                        <h2>Герои</h2>
+                        <div class="toggle-group toggle-group--compact">
+                            <button class="toggle-btn active" data-scope="all">Все</button>
+                            <button class="toggle-btn" data-scope="patch">Патч</button>
+                        </div>
+                    </div>
+                    <div id="heroes-list" class="heroes-list-compact"></div>
+                </div>
+
+            </aside>
+
+        </div>
     </main>
 
     <script src="/static/app.js"></script>
