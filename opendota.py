@@ -14,17 +14,20 @@ import socket
 from typing import Any
 
 import requests
-import requests.packages.urllib3.util.connection as urllib3_cn
 
 
-# Форсируем IPv4 для всех запросов requests.
-# Иначе в Docker контейнере DNS может вернуть только IPv6 (Cloudflare),
-# и запросы зависают в таймаут, если IPv6 не работает.
-def _force_ipv4():
-    urllib3_cn.allowed_gai_family = lambda: socket.AF_INET
+# Форсируем IPv4 глобально: перехватываем socket.getaddrinfo.
+# Иначе в Docker контейнере DNS может вернуть IPv6-адреса Cloudflare
+# (api.opendota.com), а IPv6 из контейнера не работает — запросы зависают.
+_original_getaddrinfo = socket.getaddrinfo
 
 
-_force_ipv4()
+def _getaddrinfo_ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+    # Всегда принудительно IPv4, независимо от того, что просят
+    return _original_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+
+
+socket.getaddrinfo = _getaddrinfo_ipv4_only
 
 
 OPENDOTA_BASE = "https://api.opendota.com/api"
