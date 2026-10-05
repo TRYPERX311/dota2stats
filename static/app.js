@@ -47,6 +47,12 @@ function escapeHtml(s) {
 function wrClass(winrate) {
     return winrate >= 50 ? "" : "low";
 }
+function rankIconUrl(rankTier) {
+    if (!rankTier) return null;
+    const tier = Math.floor(rankTier / 10);
+    if (tier < 1 || tier > 8) return null;
+    return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/icons/ranks/rank_icon_${tier}.png`;
+}
 
 // === Состояние ===
 let currentUser = { id: null, nickname: null };
@@ -145,12 +151,18 @@ async function loadProfile(userId, nickname) {
         const u = data.user;
         const p = data.profile;
 
+        const rankIcon = p ? rankIconUrl(p.rank_tier) : null;
+        const rankIconHtml = rankIcon
+            ? `<img class="rank-icon" src="${rankIcon}" alt="" onerror="this.style.display='none'">`
+            : "";
+
         container.innerHTML = `
-            <img src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
+            <img class="profile-avatar" src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
             <div class="profile-meta">
                 <div class="profile-name">${escapeHtml(u.nickname || nickname || "Игрок")}</div>
                 <div class="profile-rank">${p ? escapeHtml(p.rank_str) : "Ранг неизвестен"}</div>
             </div>
+            ${rankIconHtml}
         `;
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка профиля: ${escapeHtml(e.message)}</div>`;

@@ -172,11 +172,18 @@ h4 {
     flex-shrink: 0;
 }
 
-.profile-header img {
+.profile-header .profile-avatar {
     width: 64px;
     height: 64px;
     border-radius: 50%;
     background: #333;
+    flex-shrink: 0;
+}
+
+.profile-header .rank-icon {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
     flex-shrink: 0;
 }
 
@@ -325,7 +332,7 @@ h4 {
 }
 
 .mini-hero img {
-    width: 100%;
+    width: 60%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     background: #333;
