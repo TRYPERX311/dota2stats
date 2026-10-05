@@ -5,19 +5,32 @@
 - Кэш в памяти с TTL (чтобы не бить по API дважды).
 - Retry при 429 (rate limit) и 5xx.
 - Без API-ключа (анонимный доступ, 60 req/min, 2000 req/day).
+- Принудительно используется IPv4 (см. _force_ipv4).
 """
 
 import time
 import threading
+import socket
 from typing import Any
 
 import requests
+import requests.packages.urllib3.util.connection as urllib3_cn
+
+
+# Форсируем IPv4 для всех запросов requests.
+# Иначе в Docker контейнере DNS может вернуть только IPv6 (Cloudflare),
+# и запросы зависают в таймаут, если IPv6 не работает.
+def _force_ipv4():
+    urllib3_cn.allowed_gai_family = lambda: socket.AF_INET
+
+
+_force_ipv4()
 
 
 OPENDOTA_BASE = "https://api.opendota.com/api"
 TIMEOUT = 20
 MAX_RETRIES = 3
-RETRY_DELAY = 2.0   # секунды, умножается на номер попытки (exponential-ish)
+RETRY_DELAY = 2.0
 
 
 # ============================================================
@@ -50,16 +63,8 @@ def _cache_set(key: str, value: Any, ttl: int) -> None:
 # ============================================================
 
 def _get(path: str, params: dict | None = None, ttl: int = 300) -> Any | None:
-    """
-    Делает GET-запрос к OpenDota.
-
-    - ttl: сколько секунд держать ответ в кэше. Для статики (патчи, герои) — большие,
-      для динамики (матчи, профиль) — маленькие.
-    - Возвращает распарсенный JSON или None при неудаче.
-    """
     key = path
     if params:
-        # Стабильный ключ кэша
         items = sorted(params.items())
         key = f"{path}?{items}"
 
@@ -97,7 +102,6 @@ def _get(path: str, params: dict | None = None, ttl: int = 300) -> Any | None:
             time.sleep(RETRY_DELAY * attempt)
             continue
 
-        # 4xx — обычно нечего ретраить
         print(f"[opendota] HTTP {r.status_code} для {path}: {r.text[:200]}")
         return None
 
@@ -110,45 +114,36 @@ def _get(path: str, params: dict | None = None, ttl: int = 300) -> Any | None:
 # ============================================================
 
 def fetch_player(account_id: int) -> dict | None:
-    """Профиль игрока: ранг, MMR-оценка, ник, аватар."""
+    """Профиль игрока: ранг, MMR, ник, аватар."""
     data = _get(f"/players/{account_id}", ttl=600)
     if not data:
         return None
     return {
         "rank_tier": data.get("rank_tier"),
         "leaderboard_rank": data.get("leaderboard_rank"),
-        "mmr_estimate": (data.get("mmr_estimate") or {}).get("estimate"),
+        "mmr_estimate": data.get("computed_mmr") or (data.get("mmr_estimate") or {}).get("estimate"),
         "personaname": (data.get("profile") or {}).get("personaname"),
         "avatarfull": (data.get("profile") or {}).get("avatarfull"),
     }
 
 
 def fetch_wl(account_id: int) -> dict | None:
-    """Победы/поражения за всё время."""
     return _get(f"/players/{account_id}/wl", ttl=600)
 
 
 def fetch_totals(account_id: int) -> list | None:
-    """Агрегаты за всё время: суммарные kills/deaths/assists и т.д."""
     return _get(f"/players/{account_id}/totals", ttl=600)
 
 
 def fetch_hero_stats(account_id: int) -> list | None:
-    """Агрегат по героям за всё время: [{hero_id, games, win}, ...]."""
     return _get(f"/players/{account_id}/heroes", ttl=600)
 
 
 def fetch_recent_matches(account_id: int, limit: int = 20) -> list | None:
-    """Последние матчи (без KDA — только match_id, hero_id, win, duration, start_time)."""
     return _get(f"/players/{account_id}/matches", params={"limit": limit}, ttl=120)
 
 
 def fetch_matches_for_patch(account_id: int, since_ts: int, limit: int = 200) -> list | None:
-    """
-    Матчи после указанного timestamp (для фильтра по патчу).
-    OpenDota не поддерживает 'since' напрямую для /matches,
-    поэтому берём limit=500 и фильтруем на нашей стороне.
-    """
     data = _get(f"/players/{account_id}/matches", params={"limit": 500}, ttl=300)
     if not data:
         return None
@@ -156,10 +151,6 @@ def fetch_matches_for_patch(account_id: int, since_ts: int, limit: int = 200) ->
 
 
 def fetch_match_detail(match_id: int) -> dict | None:
-    """
-    Детали матча: KDA, lane_role, patch, GPM/XPM и т.д.
-    Кэш на сутки — матчи не меняются.
-    """
     data = _get(f"/matches/{match_id}", ttl=86400)
     if not data:
         return None
@@ -187,10 +178,6 @@ def fetch_match_detail(match_id: int) -> dict | None:
 
 
 def fetch_patches() -> list | None:
-    """
-    Справочник патчей. Кэш на сутки — патчи меняются раз в несколько недель.
-    Возвращает [{id, name, date}, ...] отсортированный по дате.
-    """
     data = _get("/constants/patch", ttl=86400)
     if not data:
         return None
