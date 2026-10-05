@@ -44,7 +44,6 @@ function escapeHtml(s) {
         .replaceAll('"', "&quot;");
 }
 
-// Возвращает CSS-класс для окраски винрейта ('' = зелёный, 'low' = красный)
 function wrClass(winrate) {
     return winrate >= 50 ? "" : "low";
 }
@@ -84,7 +83,7 @@ function bindToggle() {
     });
 }
 
-// === Пользователи ===
+// === Пользователи (левая колонка) ===
 async function loadUsers() {
     const container = $("users-list");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
@@ -92,7 +91,7 @@ async function loadUsers() {
     try {
         const users = await api("/users");
         if (!users.length) {
-            container.innerHTML = '<div class="loading">Пока никого нет. Авторизуйся первым!</div>';
+            container.innerHTML = '<div class="loading">Пока никого нет</div>';
             return;
         }
 
@@ -104,7 +103,7 @@ async function loadUsers() {
                 <img src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
                 <div class="user-meta">
                     <div class="name">${escapeHtml(u.nickname || "Без ника")}</div>
-                    <div class="updated-small">обновлено ${timeAgo(u.last_updated)}</div>
+                    <div class="updated-small">${timeAgo(u.last_updated)}</div>
                 </div>
             `;
             card.addEventListener("click", () => loadFullStats(u.id, u.nickname));
@@ -119,8 +118,8 @@ async function loadUsers() {
 async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
 
-    const section = $("stats-section");
-    section.classList.remove("hidden");
+    $("player-layout").classList.remove("hidden");
+    $("heroes-section").classList.remove("hidden");
 
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
@@ -285,14 +284,15 @@ async function loadPatch(userId) {
                 </div>
             </div>
 
-            <div class="patch-section">
-                <h4>Топ-5 по играм</h4>
-                <div class="mini-heroes-grid">${topByGames || '<div class="loading">Нет данных</div>'}</div>
-            </div>
-
-            <div class="patch-section">
-                <h4>Топ-5 по винрейту (мин. 3 игры)</h4>
-                <div class="mini-heroes-grid">${topByWinrate || '<div class="loading">Нет данных</div>'}</div>
+            <div class="patch-tops">
+                <div class="patch-section">
+                    <h4>Топ-5 по играм</h4>
+                    <div class="mini-heroes-grid">${topByGames || '<div class="loading">Нет данных</div>'}</div>
+                </div>
+                <div class="patch-section">
+                    <h4>Топ-5 по винрейту</h4>
+                    <div class="mini-heroes-grid">${topByWinrate || '<div class="loading">Нет данных</div>'}</div>
+                </div>
             </div>
         `;
     } catch (e) {
@@ -332,6 +332,8 @@ async function loadHeroes(userId, scope) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
 }
+
+// === Пиры (правая колонка) ===
 async function loadPeers(userId) {
     const container = $("peers-block");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
@@ -345,21 +347,24 @@ async function loadPeers(userId) {
 
         let rows = "";
         data.peers.forEach(p => {
-            const wrClass = p.winrate >= 50 ? "" : "low";
             rows += `
                 <div class="peer-row">
                     <img src="${escapeHtml(p.avatar || '')}" alt="" onerror="this.style.display='none'">
-                    <div class="peer-name">${escapeHtml(p.nickname || "Без ника")}</div>
-                    <div class="peer-games">${p.with_games} игр</div>
-                    <div class="peer-wr ${wrClass}">${p.winrate}%</div>
+                    <div class="peer-info">
+                        <div class="peer-name">${escapeHtml(p.nickname || "Без ника")}</div>
+                        <div class="peer-stats">
+                            ${p.with_games} игр · <span class="wr ${wrClass(p.winrate)}">${p.winrate}%</span>
+                        </div>
+                    </div>
                 </div>
             `;
         });
 
-        container.innerHTML = `<div class="peers-table">${rows}</div>`;
+        container.innerHTML = `<div class="peers-list">${rows}</div>`;
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
 }
+
 // === Старт ===
 init();

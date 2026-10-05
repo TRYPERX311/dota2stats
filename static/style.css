@@ -11,6 +11,7 @@ body {
     min-height: 100vh;
 }
 
+/* === ХЕДЕР === */
 header {
     background: #252525;
     padding: 20px 40px;
@@ -41,56 +42,81 @@ h1 {
 }
 
 main {
-    max-width: 1200px;
-    margin: 40px auto;
+    max-width: 1400px;
+    margin: 30px auto;
     padding: 0 20px;
 }
 
-section {
-    margin-bottom: 40px;
+.hidden {
+    display: none !important;
 }
 
 h2 {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     color: #fff;
-    font-size: 20px;
-}
-
-h3 {
-    margin: 30px 0 15px 0;
-    color: #fff;
-    font-size: 18px;
-}
-
-h4 {
-    margin: 15px 0 10px 0;
-    color: #ccc;
-    font-size: 14px;
+    font-size: 15px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.hidden {
-    display: none;
+h3 {
+    margin: 0 0 15px 0;
+    color: #fff;
+    font-size: 16px;
 }
 
-/* === Сетка пользователей === */
-.users-grid {
+h4 {
+    margin: 10px 0 8px 0;
+    color: #ccc;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === ОСНОВНАЯ СЕТКА: 3 КОЛОНКИ === */
+.player-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 15px;
+    grid-template-columns: 220px 1fr 270px;
+    gap: 20px;
+    align-items: start;
+}
+
+.col-users,
+.col-main,
+.col-peers {
+    min-width: 0;
+}
+
+/* === КАРТОЧКА === */
+.card {
+    background: #252525;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #2f2f2f;
+}
+
+.card:last-child {
+    margin-bottom: 0;
+}
+
+/* === ДРУЗЬЯ (левая колонка) === */
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .user-card {
     background: #252525;
-    padding: 15px;
+    padding: 12px;
     border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
     transition: 0.2s;
-    border: 1px solid transparent;
+    border: 1px solid #2f2f2f;
 }
 
 .user-card:hover {
@@ -99,8 +125,8 @@ h4 {
 }
 
 .user-card img {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #333;
     flex-shrink: 0;
@@ -117,65 +143,76 @@ h4 {
 .user-card .name {
     font-weight: 600;
     color: #fff;
-    font-size: 14px;
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .user-card .updated-small {
-    font-size: 11px;
+    font-size: 10px;
     color: #777;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* === Профиль === */
-.profile-header {
-    background: #252525;
-    border-radius: 8px;
-    padding: 20px;
+/* === ПРОФИЛЬ + СТАТИСТИКА В ОДНОЙ СТРОКЕ === */
+.profile-row {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-    border-left: 4px solid #c23c2a;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
 }
 
 .profile-header img {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: #333;
+    flex-shrink: 0;
 }
 
 .profile-meta {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 
 .profile-name {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: #fff;
 }
 
 .profile-rank {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
     color: #c23c2a;
     font-weight: 600;
 }
 
-/* === Общая статистика === */
+.rank-icon {
+    width: 28px;
+    height: 28px;
+}
+
+/* === ОБЩАЯ СТАТИСТИКА (справа от профиля) === */
 .stats-block {
-    background: #252525;
-    padding: 20px;
-    border-radius: 8px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
 }
 
 .stat-item {
@@ -183,39 +220,50 @@ h4 {
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #c23c2a;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #999;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .stat-sub {
     font-size: 11px;
     color: #666;
-    margin-top: 3px;
+    margin-top: 2px;
+}
+
+/* === РЯД ИЗ ДВУХ КАРТОЧЕК: 20 матчей + За патч === */
+.row-two {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.row-two .card {
+    margin-bottom: 0;
 }
 
 /* === Последние матчи === */
 .recent-summary {
-    background: #252525;
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    font-size: 14px;
+    background: #1e1e1e;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
     color: #ccc;
 }
 
 .recent-summary .big {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    color: #fff;
 }
 
 .recent-summary .big:not(.low) {
@@ -228,34 +276,36 @@ h4 {
 
 .mini-heroes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
 .mini-hero {
-    background: #252525;
+    background: #1e1e1e;
     border-radius: 6px;
-    padding: 8px;
+    padding: 6px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    text-align: center;
 }
 
 .mini-hero img {
-    width: 72px;
+    width: 100%;
     height: 40px;
     object-fit: cover;
     border-radius: 4px;
     background: #333;
-    flex-shrink: 0;
 }
 
 .mini-hero-info {
+    width: 100%;
     overflow: hidden;
 }
 
 .mini-hero-name {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #fff;
     overflow: hidden;
@@ -264,7 +314,7 @@ h4 {
 }
 
 .mini-hero-stats {
-    font-size: 11px;
+    font-size: 10px;
     color: #999;
 }
 
@@ -277,19 +327,86 @@ h4 {
     color: #f44336;
 }
 
-/* === Блок за патч === */
+/* === Статистика за патч === */
 .patch-summary {
-    background: #252525;
-    padding: 20px;
-    border-radius: 8px;
+    background: #1e1e1e;
+    padding: 12px 15px;
+    border-radius: 6px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
-    margin-bottom: 20px;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.patch-tops {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
 }
 
 .patch-section {
-    margin-bottom: 20px;
+    min-width: 0;
+}
+
+/* === Пиры (правая колонка) === */
+.peers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.peer-row {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.15s;
+    border: 1px solid #2f2f2f;
+}
+
+.peer-row:hover {
+    background: #2f2f2f;
+}
+
+.peer-row img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+}
+
+.peer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.peer-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.peer-stats {
+    font-size: 11px;
+    color: #999;
+}
+
+.peer-stats .wr {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.peer-stats .wr.low {
+    color: #f44336;
 }
 
 /* === Переключатель scope === */
@@ -332,7 +449,7 @@ h4 {
     color: #fff;
 }
 
-/* === Герои (большие карточки) === */
+/* === Герои (внизу, во всю ширину) === */
 .heroes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -344,6 +461,7 @@ h4 {
     border-radius: 8px;
     overflow: hidden;
     transition: 0.2s;
+    border: 1px solid #2f2f2f;
 }
 
 .hero-card:hover {
@@ -392,6 +510,7 @@ h4 {
 .loading {
     color: #999;
     font-style: italic;
+    font-size: 13px;
 }
 
 .error {
@@ -399,60 +518,40 @@ h4 {
     padding: 10px;
     background: #2a1515;
     border-radius: 4px;
-}
-/* === Сокомандники === */
-.peers-table {
-    background: #252525;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.peer-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 90px 80px;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 15px;
-    border-bottom: 1px solid #1a1a1a;
-}
-
-.peer-row:last-child {
-    border-bottom: none;
-}
-
-.peer-row:hover {
-    background: #2f2f2f;
-}
-
-.peer-row img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #333;
-}
-
-.peer-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.peer-games {
     font-size: 13px;
-    color: #999;
-    text-align: right;
 }
 
-.peer-wr {
-    font-size: 14px;
-    font-weight: 700;
-    color: #4caf50;
-    text-align: right;
+/* === Адаптив === */
+@media (max-width: 1100px) {
+    .player-layout {
+        grid-template-columns: 200px 1fr;
+    }
+    .col-peers {
+        grid-column: 1 / -1;
+    }
+    .peers-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .peer-row {
+        flex: 1 1 200px;
+    }
 }
 
-.peer-wr.low {
-    color: #f44336;
+@media (max-width: 750px) {
+    .player-layout {
+        grid-template-columns: 1fr;
+    }
+    .row-two {
+        grid-template-columns: 1fr;
+    }
+    .profile-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .stats-block {
+        width: 100%;
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

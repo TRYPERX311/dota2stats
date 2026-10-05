@@ -14,32 +14,50 @@
     </header>
 
     <main>
-        <!-- Список друзей -->
-        <section id="users-section">
-            <h2>Друзья</h2>
-            <div id="users-list" class="users-grid"></div>
-        </section>
+        <!-- Три колонки: друзья | центр | пиры -->
+        <div id="player-layout" class="player-layout hidden">
 
-        <!-- Статистика выбранного игрока -->
-        <section id="stats-section" class="hidden">
-            <!-- Шапка профиля -->
-            <div id="profile-header" class="profile-header"></div>
+            <!-- ЛЕВАЯ КОЛОНКА: Друзья -->
+            <aside class="col-users">
+                <h2>Друзья</h2>
+                <div id="users-list" class="users-list"></div>
+            </aside>
 
-            <!-- Общая статистика -->
-            <h3>Общая статистика</h3>
-            <div id="stats-content" class="stats-block"></div>
+            <!-- ЦЕНТР -->
+            <div class="col-main">
 
-            <!-- Последние 20 матчей -->
-            <h3>Последние 20 матчей</h3>
-            <div id="recent-block"></div>
-            <!-- Сыграно с игроками -->
-            <h3>Сыграно с игроками</h3>
-            <div id="peers-block"></div>
-            <!-- Статистика за патч -->
-            <h3 id="patch-title">Статистика за патч</h3>
-            <div id="patch-block"></div>
+                <!-- Профиль + Общая статистика (одна строка) -->
+                <div class="card">
+                    <div class="profile-row">
+                        <div id="profile-header" class="profile-header"></div>
+                        <div id="stats-content" class="stats-block"></div>
+                    </div>
+                </div>
 
-            <!-- Топ героев с переключателем -->
+                <!-- 20 матчей + За патч -->
+                <div class="row-two">
+                    <div class="card">
+                        <h3>Последние 20 матчей</h3>
+                        <div id="recent-block"></div>
+                    </div>
+                    <div class="card">
+                        <h3 id="patch-title">Статистика за патч</h3>
+                        <div id="patch-block"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА: Пиры -->
+            <aside class="col-peers">
+                <h2>Сыграно с игроками</h2>
+                <div id="peers-block"></div>
+            </aside>
+
+        </div>
+
+        <!-- Герои: внизу, во всю ширину -->
+        <section id="heroes-section" class="hidden">
             <div class="section-header">
                 <h3>Герои</h3>
                 <div class="toggle-group">
