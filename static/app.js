@@ -44,6 +44,11 @@ function escapeHtml(s) {
         .replaceAll('"', "&quot;");
 }
 
+// Возвращает CSS-класс для окраски винрейта ('' = зелёный, 'low' = красный)
+function wrClass(winrate) {
+    return winrate >= 50 ? "" : "low";
+}
+
 // === Состояние ===
 let currentUser = { id: null, nickname: null };
 let currentScope = "all";
@@ -58,7 +63,6 @@ async function init() {
     }
 
     bindToggle();
-
     await loadUsers();
 }
 
@@ -69,7 +73,6 @@ function showAuthBlock(me) {
     `;
 }
 
-// === Переключатель "За всё время / За патч" ===
 function bindToggle() {
     document.querySelectorAll(".toggle-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -112,34 +115,23 @@ async function loadUsers() {
     }
 }
 
-// === Полная статистика игрока ===
+// === Полная статистика ===
 async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
 
     const section = $("stats-section");
     section.classList.remove("hidden");
 
-    // Сброс содержимого
     $("profile-header").innerHTML = '<div class="loading">Загрузка...</div>';
     $("stats-content").innerHTML = "";
-    $("positions-content").innerHTML = "";
     $("recent-block").innerHTML = "";
     $("patch-block").innerHTML = "";
     $("heroes-list").innerHTML = "";
 
-    // 1. Профиль
     await loadProfile(userId, nickname);
-
-    // 2. Общая статистика + позиции
     await loadStats(userId);
-
-    // 3. Последние 20 матчей
     await loadRecent(userId);
-
-    // 4. За патч
     await loadPatch(userId);
-
-    // 5. Герои (по текущему scope)
     await loadHeroes(userId, currentScope);
 }
 
@@ -165,13 +157,11 @@ async function loadProfile(userId, nickname) {
 
 async function loadStats(userId) {
     const content = $("stats-content");
-    const positions = $("positions-content");
 
     try {
         const data = await api(`/stats/${userId}`);
         if (!data.stats) {
             content.innerHTML = `<div class="loading">${escapeHtml(data.message || "Статистика ещё не собрана")}</div>`;
-            positions.innerHTML = "";
             return;
         }
 
@@ -198,34 +188,9 @@ async function loadStats(userId) {
                 <div class="stat-sub">${s.games_recent} игр</div>
             </div>
         `;
-
-        // Позиции
-        if (s.positions) {
-            positions.innerHTML = "";
-            ["carry", "mid", "offlane", "support"].forEach(pos => {
-                const p = s.positions[pos];
-                if (!p || p.games === 0) return;
-                const wrClass = p.winrate >= 50 ? "" : "low";
-                positions.innerHTML += `
-                    <div class="position-card">
-                        <div class="position-name">${posLabel(pos)}</div>
-                        <div class="position-games">${p.games} игр</div>
-                        <div class="position-wr ${wrClass}">${p.winrate}%</div>
-                    </div>
-                `;
-            });
-            if (!positions.innerHTML) {
-                positions.innerHTML = '<div class="loading">Нет данных по позициям</div>';
-            }
-        }
     } catch (e) {
         content.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
-        positions.innerHTML = "";
     }
-}
-
-function posLabel(pos) {
-    return { carry: "Carry", mid: "Mid", offlane: "Offlane", support: "Support" }[pos] || pos;
 }
 
 async function loadRecent(userId) {
@@ -240,13 +205,12 @@ async function loadRecent(userId) {
 
         let heroesHtml = "";
         r.heroes.forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
             heroesHtml += `
                 <div class="mini-hero">
                     <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
                     <div class="mini-hero-info">
                         <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
                     </div>
                 </div>
             `;
@@ -255,7 +219,7 @@ async function loadRecent(userId) {
         container.innerHTML = `
             <div class="recent-summary">
                 <span class="big">${r.games}</span> игр · винрейт
-                <span class="big ${r.winrate >= 50 ? 'good' : 'bad'}">${r.winrate}%</span>
+                <span class="big ${wrClass(r.winrate)}">${r.winrate}%</span>
                 (${r.wins}–${r.games - r.wins})
             </div>
             <div class="mini-heroes-grid">${heroesHtml || '<div class="loading">Нет героев</div>'}</div>
@@ -281,47 +245,28 @@ async function loadPatch(userId) {
 
         const s = data.summary;
 
-        // Топ-5 по играм
         let topByGames = "";
         (data.heroes_by_games || []).forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
             topByGames += `
                 <div class="mini-hero">
                     <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
                     <div class="mini-hero-info">
                         <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
                     </div>
                 </div>
             `;
         });
 
-        // Топ-5 по винрейту
         let topByWinrate = "";
         (data.heroes_by_winrate || []).forEach(h => {
-            const wrClass = h.winrate >= 50 ? "" : "low";
             topByWinrate += `
                 <div class="mini-hero">
                     <img src="${escapeHtml(h.hero_image || '')}" alt="" onerror="this.style.display='none'">
                     <div class="mini-hero-info">
                         <div class="mini-hero-name">${escapeHtml(h.hero_name)}</div>
-                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass}">${h.winrate}%</span></div>
+                        <div class="mini-hero-stats">${h.games} игр · <span class="${wrClass(h.winrate)}">${h.winrate}%</span></div>
                     </div>
-                </div>
-            `;
-        });
-
-        // Позиции за патч
-        let posHtml = "";
-        ["carry", "mid", "offlane", "support"].forEach(pos => {
-            const p = data.positions[pos];
-            if (!p || p.games === 0) return;
-            const wrClass = p.winrate >= 50 ? "" : "low";
-            posHtml += `
-                <div class="position-card">
-                    <div class="position-name">${escapeHtml(p.label)}</div>
-                    <div class="position-games">${p.games} игр</div>
-                    <div class="position-wr ${wrClass}">${p.winrate}%</div>
                 </div>
             `;
         });
@@ -348,11 +293,6 @@ async function loadPatch(userId) {
                 <h4>Топ-5 по винрейту (мин. 3 игры)</h4>
                 <div class="mini-heroes-grid">${topByWinrate || '<div class="loading">Нет данных</div>'}</div>
             </div>
-
-            <div class="patch-section">
-                <h4>По позициям</h4>
-                <div class="positions-grid">${posHtml || '<div class="loading">Нет данных</div>'}</div>
-            </div>
         `;
     } catch (e) {
         title.textContent = "Статистика за патч";
@@ -375,14 +315,13 @@ async function loadHeroes(userId, scope) {
         data.heroes.forEach(h => {
             const card = document.createElement("div");
             card.className = "hero-card";
-            const wrClass = h.winrate >= 50 ? "" : "low";
             card.innerHTML = `
                 <img src="${escapeHtml(h.hero_image || '')}" alt="${escapeHtml(h.hero_name)}" onerror="this.style.display='none'">
                 <div class="hero-info">
                     <div class="hero-name">${escapeHtml(h.hero_name)}</div>
                     <div class="hero-stats">
                         <span>${h.games} игр</span>
-                        <span class="winrate ${wrClass}">${h.winrate}%</span>
+                        <span class="winrate ${wrClass(h.winrate)}">${h.winrate}%</span>
                     </div>
                 </div>
             `;

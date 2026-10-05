@@ -207,43 +207,6 @@ h4 {
     margin-top: 3px;
 }
 
-/* === Позиции === */
-.positions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-}
-
-.position-card {
-    background: #252525;
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-}
-
-.position-name {
-    font-size: 13px;
-    color: #fff;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.position-games {
-    font-size: 11px;
-    color: #777;
-    margin-bottom: 6px;
-}
-
-.position-wr {
-    font-size: 18px;
-    font-weight: 700;
-    color: #4caf50;
-}
-
-.position-wr.low {
-    color: #f44336;
-}
-
 /* === Последние матчи === */
 .recent-summary {
     background: #252525;
@@ -260,11 +223,11 @@ h4 {
     color: #fff;
 }
 
-.recent-summary .good {
+.recent-summary .big:not(.low) {
     color: #4caf50;
 }
 
-.recent-summary .bad {
+.recent-summary .big.low {
     color: #f44336;
 }
 
@@ -280,12 +243,13 @@ h4 {
     padding: 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .mini-hero img {
-    width: 40px;
+    width: 72px;
     height: 40px;
+    object-fit: cover;
     border-radius: 4px;
     background: #333;
     flex-shrink: 0;
@@ -309,7 +273,12 @@ h4 {
     color: #999;
 }
 
-.mini-hero-stats .low {
+.mini-hero-stats span {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.mini-hero-stats span.low {
     color: #f44336;
 }
 
