@@ -2,22 +2,23 @@ from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import RedirectResponse, FileResponse, JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
+import threading
+
 import config
 import db
 import steam_auth
-from heroes import get_hero_name, get_hero_image_url
 import collector
+from heroes import get_hero_name, get_hero_image_url
+
 
 app = FastAPI(title="Dota 2 Stats")
 
-# Cookie-сессия: тот же формат, что у Flask (itsdangerous).
-# Ключ берём из config.SECRET_KEY — cookies, выданные Flask, будут читаться.
 app.add_middleware(
     SessionMiddleware,
     secret_key=config.SECRET_KEY,
-    session_cookie="session",      # имя cookie как во Flask по умолчанию
+    session_cookie="session",
     same_site="lax",
-    https_only=False,              # на проде за HTTPS поставишь True
+    https_only=False,
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -64,9 +65,8 @@ def processlogin(request: Request):
             nickname=nickname,
             avatar_url=avatar_url,
         )
-        # 🆕 Новый пользователь — сразу собираем его статистику в фоне,
-        # чтобы он не ждал следующего планового сбора (до 6 часов).
-        import threading
+        # Новый пользователь — сразу собираем его статистику,
+        # не дожидаясь планового сбора.
         threading.Thread(
             target=collector.collect_for_user,
             args=(user,),
@@ -123,7 +123,6 @@ def users_list():
 # ============================================================
 
 def _build_stats_payload(user_id: int):
-    """Собирает полный ответ статистики. Возвращает dict или None."""
     user = db.get_user_by_id(user_id)
     if not user:
         return None
@@ -196,48 +195,6 @@ def heroes_by_id(
         "user": {"id": user.id, "nickname": user.nickname},
         "heroes": result,
     }
-
-
-# ============================================================
-# ТЕСТОВЫЙ РОУТ (только в DEBUG)
-# ============================================================
-
-if config.DEBUG:
-    @app.get("/test-login")
-    def test_login(request: Request, steamid: str | None = None):
-        if not steamid:
-            return JSONResponse(
-                {"error": "Укажи ?steamid=76561198XXXXXXXXX"},
-                status_code=400,
-            )
-        try:
-            steam_id64 = int(steamid)
-        except ValueError:
-            return JSONResponse({"error": "steamid должен быть числом"}, status_code=400)
-
-        user = db.get_user_by_steam_id(steam_id64)
-
-        if not user:
-            try:
-                account_id = steam_auth.steam_id_to_account_id(steam_id64)
-            except ValueError as e:
-                return JSONResponse({"error": str(e)}, status_code=400)
-            profile = steam_auth.fetch_steam_profile(steam_id64)
-            nickname = profile["nickname"] if profile else f"TestUser_{account_id}"
-            avatar_url = profile["avatar_url"] if profile else None
-            user = db.create_user(
-                steam_id64=steam_id64,
-                account_id=account_id,
-                nickname=nickname,
-                avatar_url=avatar_url,
-            )
-        else:
-            profile = steam_auth.fetch_steam_profile(steam_id64)
-            if profile:
-                db.update_user_info(user.id, profile["nickname"], profile["avatar_url"])
-
-        request.session["user_id"] = user.id
-        return RedirectResponse("/")
 
 
 # ============================================================
