@@ -12,7 +12,12 @@ from heroes import get_hero_name, get_hero_image_url
 from positions import rank_to_str
 
 
-app = FastAPI(title="Dota 2 Stats")
+app = FastAPI(
+    title="Dota 2 Stats",
+    docs_url="/docs" if config.DEBUG else None,
+    redoc_url="/redoc" if config.DEBUG else None,
+    openapi_url="/openapi.json" if config.DEBUG else None,
+)
 
 app.add_middleware(
     SessionMiddleware,
