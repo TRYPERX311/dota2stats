@@ -148,7 +148,7 @@ async function loadUsers() {
             card.addEventListener("click", () => loadFullStats(u.id, u.nickname));
             container.appendChild(card);
         });
-        
+
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
