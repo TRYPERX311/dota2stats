@@ -644,9 +644,9 @@ body.state-user-other .landing-content {
 
 .landing-logo {
     width: 100%;
-    max-width: 420px;
+    max-width: 240px;
     height: auto;
-    margin: 0 auto 20px;
+    margin: 0 auto 10px;
     display: block;
     opacity: 0.95;
     border-radius: 8px;
