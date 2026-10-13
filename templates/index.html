@@ -5,17 +5,16 @@
     <title>Dota 2 Stats</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="state-guest">
     <header>
-        <h1>🎮 Dota 2 Stats</h1>
+        <h1 id="app-title">🎮 Dota 2 Stats</h1>
         <div id="auth-block">
             <a href="/login" id="login-btn">Войти через Steam</a>
         </div>
     </header>
 
     <main>
-        <!-- Три колонки: друзья | центр | пиры + герои -->
-        <div id="player-layout" class="player-layout hidden">
+        <div id="player-layout" class="player-layout">
 
             <!-- ЛЕВАЯ КОЛОНКА: Друзья -->
             <aside class="col-users">
@@ -26,38 +25,97 @@
             <!-- ЦЕНТР -->
             <div class="col-main">
 
-                <!-- Профиль + Общая статистика (одна строка) -->
-                <div class="card">
-                    <div class="profile-row">
-                        <div id="profile-header" class="profile-header"></div>
-                        <div id="stats-content" class="stats-block"></div>
+                <!-- LANDING: показывается гостю -->
+                <div class="landing-content">
+                    <div class="landing-card">
+                        <img class="landing-logo"
+                             src="/static/img/logo.png"
+                             alt="Dota 2 Stats">
+                        <h2 class="landing-title">Dota 2 Stats(Патимейкер)</h2>
+                        <p class="landing-subtitle">
+                            Ваша с друзьями статистика матчей в Dota 2 — собранная из OpenDota
+                            и обновляемая каждые 6 часов.
+                        </p>
+
+                        <div class="landing-features">
+                            <div class="landing-feature">
+                                <div class="landing-feature-icon">📊</div>
+                                <div>
+                                    <div class="landing-feature-title">Общая статистика</div>
+                                    <div class="landing-feature-text">
+                                        Победы, поражения, винрейт, средний KDA за всё время.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="landing-feature">
+                                <div class="landing-feature-icon">🦸</div>
+                                <div>
+                                    <div class="landing-feature-title">Топ героев</div>
+                                    <div class="landing-feature-text">
+                                        Любимые герои за всё время и за текущий патч.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="landing-feature">
+                                <div class="landing-feature-icon">🤝</div>
+                                <div>
+                                    <div class="landing-feature-title">Сокомандники</div>
+                                    <div class="landing-feature-text">
+                                        С кем ты чаще всего играешь и какой у вас винрейт.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="landing-feature">
+                                <div class="landing-feature-icon">🕒</div>
+                                <div>
+                                    <div class="landing-feature-title">Последние матчи</div>
+                                    <div class="landing-feature-text">
+                                        Сводка по последним 20 играм и статистика за патч.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="landing-hint">
+                            👈 Выбери игрока в списке слева, чтобы увидеть его статистику
+                        </div>
+
+                        <div class="landing-future">
+                            <span class="landing-future-badge">Скоро</span>
+                            Функции: сравнение игроков, расширенная аналитика, планирование игр, приглашение в группу, уведомления о том что кто то хочет поиграть и о приглашении в группу.
+                        </div>
                     </div>
                 </div>
 
-                <!-- 20 матчей + За патч -->
-                <div class="row-two">
+                <!-- СТАТИСТИКА: показывается при выборе игрока -->
+                <div class="stats-content">
                     <div class="card">
-                        <h3>Последние 20 матчей</h3>
-                        <div id="recent-block"></div>
+                        <div class="profile-row">
+                            <div id="profile-header" class="profile-header"></div>
+                            <div id="stats-content" class="stats-block"></div>
+                        </div>
                     </div>
-                    <div class="card">
-                        <h3 id="patch-title">Статистика за патч</h3>
-                        <div id="patch-block"></div>
+
+                    <div class="row-two">
+                        <div class="card">
+                            <h3>Последние 20 матчей</h3>
+                            <div id="recent-block"></div>
+                        </div>
+                        <div class="card">
+                            <h3 id="patch-title">Статистика за патч</h3>
+                            <div id="patch-block"></div>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
             <!-- ПРАВАЯ КОЛОНКА: Пиры + Герои -->
-            <aside class="col-peers">
-
-                <!-- Карточка: Пиры -->
+            <aside class="col-peers stats-content">
                 <div class="card">
                     <h2>Сыграно с игроками</h2>
                     <div id="peers-block"></div>
                 </div>
-
-                <!-- Карточка: Герои -->
                 <div class="card">
                     <div class="heroes-header">
                         <h2>Герои</h2>
@@ -68,7 +126,6 @@
                     </div>
                     <div id="heroes-list" class="heroes-list-compact"></div>
                 </div>
-
             </aside>
 
         </div>

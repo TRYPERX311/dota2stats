@@ -70,7 +70,38 @@ async function init() {
     }
 
     bindToggle();
+    bindLogoReset();  // ← добавляем
     await loadUsers();
+}
+
+function bindLogoReset() {
+    const title = $("app-title");
+    if (!title) return;
+    title.style.cursor = "pointer";
+    title.addEventListener("click", resetToGuest);
+}
+
+function resetToGuest() {
+    currentUser = { id: null, nickname: null };
+    currentScope = "all";
+
+    // Сбрасываем переключатель героев
+    document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+    const allBtn = document.querySelector('.toggle-btn[data-scope="all"]');
+    if (allBtn) allBtn.classList.add("active");
+
+    // Очищаем данные
+    $("profile-header").innerHTML = "";
+    $("stats-content").innerHTML = "";
+    $("recent-block").innerHTML = "";
+    $("peers-block").innerHTML = "";
+    $("patch-block").innerHTML = "";
+    $("heroes-list").innerHTML = "";
+    $("patch-title").textContent = "Статистика за патч";
+
+    // Возвращаем состояние "гость"
+    document.body.classList.remove("state-user");
+    document.body.classList.add("state-guest");
 }
 
 function showAuthBlock(me) {
@@ -118,8 +149,6 @@ async function loadUsers() {
             container.appendChild(card);
         });
 
-        // Показываем блок с колонками
-        $("player-layout").classList.remove("hidden");
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
@@ -128,6 +157,10 @@ async function loadUsers() {
 // === Полная статистика ===
 async function loadFullStats(userId, nickname) {
     currentUser = { id: userId, nickname };
+
+    // Переключаем состояние: гость → пользователь
+    document.body.classList.remove("state-guest");
+    document.body.classList.add("state-user");
 
     $("player-layout").classList.remove("hidden");
 
