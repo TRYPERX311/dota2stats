@@ -52,56 +52,38 @@ function rankIconUrl(rankTier) {
     if (!rankTier) return null;
     const tier = Math.floor(rankTier / 10);
     if (tier < 1 || tier > 8) return null;
-    // Используем CDN OpenDota — он стабильнее прямых ссылок Steam
     return `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${tier}.png`;
 }
 
 // === Состояние ===
 let currentUser = { id: null, nickname: null };
 let currentScope = "all";
+let me = null;
 
 // === Инициализация ===
 async function init() {
     try {
-        const me = await api("/me");
+        me = await api("/me");
         showAuthBlock(me);
     } catch {
+        me = null;
         $("auth-block").innerHTML = '<a href="/login" id="login-btn">Войти через Steam</a>';
     }
 
     bindToggle();
-    bindLogoReset();  // ← добавляем
+    bindLogoClick();
+
+    // Если авторизован — сразу открываем свою статистику
+    if (me) {
+        try {
+            await loadFullStats(me.id, me.nickname, true);
+        } catch (e) {
+            console.error("Не удалось загрузить свой профиль:", e);
+            resetToGuest();
+        }
+    }
+
     await loadUsers();
-}
-
-function bindLogoReset() {
-    const title = $("app-title");
-    if (!title) return;
-    title.style.cursor = "pointer";
-    title.addEventListener("click", resetToGuest);
-}
-
-function resetToGuest() {
-    currentUser = { id: null, nickname: null };
-    currentScope = "all";
-
-    // Сбрасываем переключатель героев
-    document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
-    const allBtn = document.querySelector('.toggle-btn[data-scope="all"]');
-    if (allBtn) allBtn.classList.add("active");
-
-    // Очищаем данные
-    $("profile-header").innerHTML = "";
-    $("stats-content").innerHTML = "";
-    $("recent-block").innerHTML = "";
-    $("peers-block").innerHTML = "";
-    $("patch-block").innerHTML = "";
-    $("heroes-list").innerHTML = "";
-    $("patch-title").textContent = "Статистика за патч";
-
-    // Возвращаем состояние "гость"
-    document.body.classList.remove("state-user");
-    document.body.classList.add("state-guest");
 }
 
 function showAuthBlock(me) {
@@ -122,6 +104,43 @@ function bindToggle() {
     });
 }
 
+// === Клик по логотипу ===
+function bindLogoClick() {
+    const title = $("app-title");
+    if (!title) return;
+    title.style.cursor = "pointer";
+    title.addEventListener("click", onLogoClick);
+}
+
+async function onLogoClick() {
+    if (me) {
+        await loadFullStats(me.id, me.nickname, true);
+    } else {
+        resetToGuest();
+    }
+}
+
+// === Сброс в "гостя" ===
+function resetToGuest() {
+    currentUser = { id: null, nickname: null };
+    currentScope = "all";
+
+    document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+    const allBtn = document.querySelector('.toggle-btn[data-scope="all"]');
+    if (allBtn) allBtn.classList.add("active");
+
+    $("profile-header").innerHTML = "";
+    $("stats-content").innerHTML = "";
+    $("recent-block").innerHTML = "";
+    $("peers-block").innerHTML = "";
+    $("patch-block").innerHTML = "";
+    $("heroes-list").innerHTML = "";
+    $("patch-title").textContent = "Статистика за патч";
+
+    document.body.classList.remove("state-user-me", "state-user-other");
+    document.body.classList.add("state-guest");
+}
+
 // === Пользователи (левая колонка) ===
 async function loadUsers() {
     const container = $("users-list");
@@ -138,29 +157,39 @@ async function loadUsers() {
         users.forEach(u => {
             const card = document.createElement("div");
             card.className = "user-card";
+
+            // Подсветка "себя"
+            const isMe = me && me.id === u.id;
+            if (isMe) card.classList.add("user-card--me");
+
             card.innerHTML = `
                 <img src="${escapeHtml(u.avatar_url || '')}" alt="" onerror="this.style.display='none'">
                 <div class="user-meta">
-                    <div class="name">${escapeHtml(u.nickname || "Без ника")}</div>
+                    <div class="name">${escapeHtml(u.nickname || "Без ника")}${isMe ? " (вы)" : ""}</div>
                     <div class="updated-small">${timeAgo(u.last_updated)}</div>
                 </div>
             `;
-            card.addEventListener("click", () => loadFullStats(u.id, u.nickname));
+
+            card.addEventListener("click", () => {
+                const clickedIsMe = me && me.id === u.id;
+                loadFullStats(u.id, u.nickname, clickedIsMe);
+            });
+
             container.appendChild(card);
         });
 
+        $("player-layout").classList.remove("hidden");
     } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${escapeHtml(e.message)}</div>`;
     }
 }
 
 // === Полная статистика ===
-async function loadFullStats(userId, nickname) {
+async function loadFullStats(userId, nickname, isMe = false) {
     currentUser = { id: userId, nickname };
 
-    // Переключаем состояние: гость → пользователь
-    document.body.classList.remove("state-guest");
-    document.body.classList.add("state-user");
+    document.body.classList.remove("state-guest", "state-user-me", "state-user-other");
+    document.body.classList.add(isMe ? "state-user-me" : "state-user-other");
 
     $("player-layout").classList.remove("hidden");
 
@@ -347,7 +376,7 @@ async function loadPatch(userId) {
     }
 }
 
-// === Герои (правая колонка, компактный список) ===
+// === Герои ===
 async function loadHeroes(userId, scope) {
     const container = $("heroes-list");
     container.innerHTML = '<div class="loading">Загрузка...</div>';
@@ -380,7 +409,7 @@ async function loadHeroes(userId, scope) {
     }
 }
 
-// === Пиры (правая колонка, компактно) ===
+// === Пиры ===
 async function loadPeers(userId) {
     const container = $("peers-block");
     container.innerHTML = '<div class="loading">Загрузка...</div>';

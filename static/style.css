@@ -26,6 +26,15 @@ h1 {
     color: #fff;
 }
 
+#app-title {
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#app-title:hover {
+    color: #c23c2a;
+}
+
 #login-btn {
     background: #171a21;
     color: #fff;
@@ -73,7 +82,7 @@ h4 {
     letter-spacing: 0.5px;
 }
 
-/* === ОСНОВНАЯ СЕТКА: 3 КОЛОНКИ === */
+/* === ОСНОВНАЯ СЕТКА === */
 .player-layout {
     display: grid;
     grid-template-columns: 220px 1fr 270px;
@@ -100,7 +109,7 @@ h4 {
     margin-bottom: 0;
 }
 
-/* === ДРУЗЬЯ (левая колонка) === */
+/* === ДРУЗЬЯ === */
 .users-list {
     display: flex;
     flex-direction: column;
@@ -121,6 +130,16 @@ h4 {
 
 .user-card:hover {
     background: #2f2f2f;
+    border-color: #c23c2a;
+}
+
+.user-card--me {
+    border-color: #c23c2a;
+    background: #2a1f1f;
+}
+
+.user-card--me:hover {
+    background: #332222;
     border-color: #c23c2a;
 }
 
@@ -157,7 +176,7 @@ h4 {
     white-space: nowrap;
 }
 
-/* === ПРОФИЛЬ + СТАТИСТИКА В ОДНОЙ СТРОКЕ! === */
+/* === ПРОФИЛЬ + СТАТИСТИКА === */
 .profile-row {
     display: flex;
     align-items: center;
@@ -213,7 +232,7 @@ h4 {
     height: 28px;
 }
 
-/* === ОБЩАЯ СТАТИСТИКА (справа от профиля) === */
+/* === ОБЩАЯ СТАТИСТИКА === */
 .stats-block {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -231,9 +250,9 @@ h4 {
     font-weight: 700;
     color: #c23c2a;
 }
-/* W-L в общем блоке статистики */
+
 .stat-value.stat-wl {
-    color: inherit;              /* цвет задаётся через .wins/.losses */
+    color: inherit;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -277,7 +296,7 @@ h4 {
     font-weight: 600;
 }
 
-/* === 20 матчей + За патч — друг под другом, во всю ширину === */
+/* === 20 матчей + За патч === */
 .row-two {
     display: flex;
     flex-direction: column;
@@ -311,7 +330,7 @@ h4 {
     color: #f44336;
 }
 
-/* === Мини-герои (последние 20 матчей) === */
+/* === Мини-герои === */
 .mini-heroes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -390,7 +409,7 @@ h4 {
     min-width: 0;
 }
 
-/* === ПРАВАЯ КОЛОНКА: карточки пиров и героев === */
+/* === ПРАВАЯ КОЛОНКА === */
 .col-peers .card {
     padding: 16px;
 }
@@ -498,7 +517,7 @@ h4 {
     font-size: 11px;
 }
 
-/* === Герои (компактный вертикальный список) === */
+/* === Герои === */
 .heroes-header {
     display: flex;
     justify-content: space-between;
@@ -532,7 +551,7 @@ h4 {
 
 .hero-card img {
     width: 48px;
-    height: 27px; /* 16:9 */
+    height: 27px;
     object-fit: cover;
     border-radius: 4px;
     background: #333;
@@ -585,61 +604,30 @@ h4 {
     font-size: 13px;
 }
 
-/* === Адаптив === */
-@media (max-width: 1100px) {
-    .player-layout {
-        grid-template-columns: 200px 1fr;
-    }
-    .col-peers {
-        grid-column: 1 / -1;
-    }
-    .peers-list {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    .peer-row {
-        flex: 1 1 200px;
-    }
-    .heroes-list-compact {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    .hero-card {
-        flex: 1 1 220px;
-    }
-}
-
-@media (max-width: 750px) {
-    .player-layout {
-        grid-template-columns: 1fr;
-    }
-    .profile-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-     .mini-heroes-grid {
-        grid-template-columns: repeat(2, 1fr);
-     }
-    .stats-block {
-        width: 100%;
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
 /* === СОСТОЯНИЯ СТРАНИЦЫ === */
 
-/* Гость: показываем landing, скрываем статистику */
-body.state-guest .stats-content {
+/* Гость: landing, статистика скрыта */
+body.state-guest .col-main .stats-content,
+body.state-guest .col-peers {
     display: none !important;
 }
+body.state-guest .landing-content {
+    display: block !important;
+}
 
-/* Пользователь выбран: скрываем landing, показываем статистику */
-body.state-user .landing-content {
+/* Авторизован / другой игрок: статистика, landing скрыт */
+body.state-user-me .col-main .stats-content,
+body.state-user-me .col-peers,
+body.state-user-other .col-main .stats-content,
+body.state-user-other .col-peers {
+    display: block !important;
+}
+body.state-user-me .landing-content,
+body.state-user-other .landing-content {
     display: none !important;
 }
 
 /* === LANDING === */
-
 .landing-content {
     display: block;
 }
@@ -656,7 +644,7 @@ body.state-user .landing-content {
 
 .landing-logo {
     width: 100%;
-    max-width: 240px;
+    max-width: 420px;
     height: auto;
     margin: 0 auto 20px;
     display: block;
@@ -757,8 +745,46 @@ body.state-user .landing-content {
     margin-right: 8px;
 }
 
-/* Адаптив для landing */
+/* === Адаптив === */
+@media (max-width: 1100px) {
+    .player-layout {
+        grid-template-columns: 200px 1fr;
+    }
+    .col-peers {
+        grid-column: 1 / -1;
+    }
+    .peers-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .peer-row {
+        flex: 1 1 200px;
+    }
+    .heroes-list-compact {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .hero-card {
+        flex: 1 1 220px;
+    }
+}
+
 @media (max-width: 750px) {
+    .player-layout {
+        grid-template-columns: 1fr;
+    }
+    .profile-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .mini-heroes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .stats-block {
+        width: 100%;
+        grid-template-columns: repeat(2, 1fr);
+    }
     .landing-card {
         padding: 24px 18px;
     }
