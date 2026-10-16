@@ -52,7 +52,7 @@ function rankIconUrl(rankTier) {
     if (!rankTier) return null;
     const tier = Math.floor(rankTier / 10);
     if (tier < 1 || tier > 8) return null;
-    return `https://www.opendota.com/assets/images/dota2/rank_icons/rank_icon_${tier}.png`;
+    return `/static/icons/ranks/rank_icon_${tier}.png`;
 }
 
 // === Состояние ===
