@@ -171,7 +171,6 @@ def fetch_match_detail(match_id: int) -> dict | None:
                 "kills": p.get("kills"),
                 "deaths": p.get("deaths"),
                 "assists": p.get("assists"),
-                "lane_role": p.get("lane_role"),
                 "gold_per_min": p.get("gold_per_min"),
                 "xp_per_min": p.get("xp_per_min"),
             }
