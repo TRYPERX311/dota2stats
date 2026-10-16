@@ -15,14 +15,23 @@ RANK_NAMES = {
 
 def rank_to_str(rank_tier: int | None) -> str:
     """
-    Превращает rank_tier (например, 53) в строку 'Divine 3'.
+    Превращает rank_tier (например, 53) в строку 'Legend 3'.
     None или 0 → 'Calibrating'.
+    Невалидный вход → 'Unknown'.
     """
     if not rank_tier:
         return "Calibrating"
+
     tier = rank_tier // 10
     star = rank_tier % 10
-    name = RANK_NAMES.get(tier, "Unknown")
-    if tier == 8:      # Immortal без звёзд
-        return name
-    return f"{name} {star}"
+
+    if tier not in RANK_NAMES:
+        return "Unknown"
+
+    if tier == 8:      # Immortal — без звёзд
+        return RANK_NAMES[8]
+
+    if not (1 <= star <= 5):
+        return "Unknown"
+
+    return f"{RANK_NAMES[tier]} {star}"
