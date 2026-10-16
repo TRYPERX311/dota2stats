@@ -627,6 +627,11 @@ body.state-user-other .landing-content {
     display: none !important;
 }
 
+/* Пиры видны только в своём профиле */
+body.state-user-other #peers-card {
+    display: none !important;
+}
+
 /* === LANDING === */
 .landing-content {
     display: block;

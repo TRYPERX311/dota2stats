@@ -404,7 +404,12 @@ def patch_stats_by_id(user_id: int):
 # ============================================================
 
 @app.get("/stats/{user_id}/peers")
-def peers_by_id(user_id: int, limit: int = Query(5, ge=1, le=20)):
+def peers_by_id(request: Request, user_id: int, limit: int = Query(5, ge=1, le=20)):
+    # Пиры доступны только авторизованному пользователю в своём профиле
+    current_id = request.session.get("user_id")
+    if not current_id or int(current_id) != user_id:
+        raise HTTPException(status_code=403, detail="peers_forbidden")
+
     user = db.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")

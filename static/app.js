@@ -203,7 +203,12 @@ async function loadFullStats(userId, nickname, isMe = false) {
     await loadProfile(userId, nickname);
     await loadStats(userId);
     await loadRecent(userId);
-    await loadPeers(userId);
+
+    // Пиры — только для своего профиля
+    if (isMe) {
+        await loadPeers(userId);
+    }
+
     await loadPatch(userId);
     await loadHeroes(userId, currentScope);
 }
