@@ -9,8 +9,7 @@ import db
 import steam_auth
 import collector
 from heroes import get_hero_name, get_hero_image_url
-from positions import rank_to_str
-
+from ranks import rank_to_str
 
 app = FastAPI(
     title="Dota 2 Stats",
@@ -267,9 +266,9 @@ def my_stats(request: Request):
 
 @app.get("/stats/{user_id}/heroes")
 def heroes_by_id(
-    user_id: int,
-    limit: int = Query(10, ge=1, le=100),
-    scope: str = Query("all", pattern="^(all|patch)$"),
+        user_id: int,
+        limit: int = Query(10, ge=1, le=100),
+        scope: str = Query("all", pattern="^(all|patch)$"),
 ):
     user = db.get_user_by_id(user_id)
     if not user:
@@ -399,6 +398,8 @@ def patch_stats_by_id(user_id: int):
         "heroes_by_games": top_by_games,
         "heroes_by_winrate": top_by_winrate,
     }
+
+
 # ============================================================
 # API: СОКОМАНДНИКИ
 # ============================================================
@@ -431,10 +432,12 @@ def peers_by_id(request: Request, user_id: int, limit: int = Query(5, ge=1, le=2
         ],
     }
 
+
 # ============================================================
 # ЗАПУСК (для локальной разработки)
 # ============================================================
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=config.DEBUG)

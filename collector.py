@@ -4,31 +4,13 @@ from datetime import datetime, timezone
 import db
 import opendota
 
+from utils import ts_to_dt, wl_from_match
+
 
 RECENT_LIMIT = 20
 PATCH_MATCH_LIMIT = 200
 DETAILS_THROTTLE_SEC = 1.1
 PEERS_LIMIT = 5
-
-
-# ============================================================
-# УТИЛИТЫ
-# ============================================================
-
-def _ts_to_dt(ts: int | None) -> datetime | None:
-    if not ts:
-        return None
-    return datetime.fromtimestamp(ts, tz=timezone.utc).replace(tzinfo=None)
-
-
-def _wl_from_match(m: dict, account_id: int) -> int | None:
-    radiant_win = m.get("radiant_win")
-    player_slot = m.get("player_slot")
-    if radiant_win is None or player_slot is None:
-        return None
-    is_radiant = player_slot < 128
-    return 1 if (radiant_win and is_radiant) or (not radiant_win and not is_radiant) else 0
-
 
 # ============================================================
 # ПАТЧИ
@@ -64,7 +46,6 @@ def sync_patches() -> int | None:
         print(f"[collector] Текущий патч: {current.name} (id={current.id}, {current.released_at.date()})")
         return current.id
     return None
-
 
 # ============================================================
 # СБОР ПОЛЬЗОВАТЕЛЯ
@@ -143,7 +124,7 @@ def collect_recent(user_id: int, account_id: int) -> dict:
     last_ts = None
 
     for m in matches:
-        w = _wl_from_match(m, account_id)
+        w = wl_from_match(m, account_id)
         if w is None:
             continue
         games += 1
@@ -157,7 +138,7 @@ def collect_recent(user_id: int, account_id: int) -> dict:
         "wins_recent": wins,
     }
     if last_ts:
-        fields["last_match_at"] = _ts_to_dt(last_ts)
+        fields["last_match_at"] = ts_to_dt(last_ts)
     return fields
 
 
@@ -179,7 +160,7 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
         match_id = m.get("match_id")
         if not match_id:
             continue
-        w = _wl_from_match(m, account_id)
+        w = wl_from_match(m, account_id)
         if w is None:
             continue
 
@@ -188,7 +169,7 @@ def collect_patch_matches(user_id: int, account_id: int, patch_id: int, patch_dt
             "hero_id": m.get("hero_id"),
             "win": w,
             "duration": m.get("duration"),
-            "played_at": _ts_to_dt(m.get("start_time")),
+            "played_at": ts_to_dt(m.get("start_time")),
             "patch_id": patch_id,
         }
 
@@ -285,7 +266,7 @@ def collect_peers(user_id: int, account_id: int) -> int:
             "peer_avatar": (profile or {}).get("avatarfull"),
             "with_games": p.get("with_games") or 0,
             "with_win": p.get("with_win") or 0,
-            "last_played": _ts_to_dt(p.get("last_played")),
+            "last_played": ts_to_dt(p.get("last_played")),
         })
 
     db.replace_peers(user_id, rows)

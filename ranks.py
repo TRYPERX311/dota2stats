@@ -24,7 +24,6 @@ def rank_to_str(rank_tier: int | None) -> str:
 
     tier = rank_tier // 10
     star = rank_tier % 10
-
     if tier not in RANK_NAMES:
         return "Unknown"
 
