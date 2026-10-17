@@ -1,6 +1,6 @@
 import pytest
 
-from positions import rank_to_str
+from ranks import rank_to_str
 
 
 @pytest.mark.parametrize(
