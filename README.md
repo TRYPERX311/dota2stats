@@ -1,7 +1,7 @@
 # Проект Dota2 Stats
 ![CI/CD](https://github.com/TRYPERX311/dota2stats/actions/workflows/deploy.yml/badge.svg)
 ![Tests](https://github.com/TRYPERX311/dota2stats/actions/workflows/tests.yml/badge.svg)
-![Python](https://img.shields.io/badge/python-3.11-blue)
+![Python](https://img.shields.io/badge/python-3.14-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.141-green)
 
 **Веб-приложение для просмотра статистики игроков Dota 2 через [OpenDota API](https://docs.opendota.com/). Создано для учебных целей и как площадка для практики в QA-тестировании.**
