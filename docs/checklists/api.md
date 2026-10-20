@@ -6,7 +6,7 @@
 
 **Окружение:** Production / Local
 
-**Swagger:** http://localhost:5000/docs (только при DEBUG=True)
+**Swagger:** http://localhost:80/docs (только при DEBUG=True)
 
 **Внешнее ограничение:** OpenDota — 60 RPS
 
@@ -29,7 +29,7 @@
 - [ ] В URL есть `openid.return_to` с корректным `BASE_URL`
 
 ### `GET /processlogin`
-- [ ] Валидный ответ Steam → 307 редирект на `/`
+- [ ] Валидный ответ Steam → 307 редирект на `/me`
 - [ ] Сессия установлена (`session` cookie)
 - [ ] Невалидный ответ Steam → 401 `{"error": "steam_auth_failed"}`
 - [ ] Новый пользователь → создаётся в БД, запускается фоновый сбор
@@ -80,9 +80,11 @@
 ### `GET /stats/{user_id}`
 - [ ] Существующий → 200 OK
 - [ ] Поля: `user`, `stats`
+- [ ] `rank_tier`, `rank_str`,`mmr_estimate`
 - [ ] `games_total`, `wins_total`, `losses_total`, `winrate_total`
 - [ ] `games_recent`, `wins_recent`, `winrate_recent`
 - [ ] `avg_kills`, `avg_deaths`, `avg_assists`, `avg_kda`
+- [ ] `last_match_at`, `updated_at`
 - [ ] Нет статистики → 200 с `stats: null` и `message`
 - [ ] Несуществующий → 404
 
@@ -124,7 +126,7 @@
 
 ### `GET /stats/{user_id}/peers`
 - [ ] 200 OK для **авторизованного** (свой профиль)
-- [ ] 401 для **гостя**
+- [ ] 403 для **гостя**
 - [ ] 403 для **авторизованного** (чужой профиль)
 - [ ] 404 для несуществующего user_id
 - [ ] `limit` по умолчанию → 5
