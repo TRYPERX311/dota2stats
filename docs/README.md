@@ -1,4 +1,4 @@
-\# Документация проекта Dota 2 Stats
+# Документация проекта Dota 2 Stats
 
 
 
@@ -6,21 +6,21 @@
 
 
 
-\## Разделы
+## Разделы
 
 
 
-\- \[Test Plan](TestPlan.md) — план тестирования
+- [Test Plan](TestPlan.md) — план тестирования
 
-\- \[Checklists](checklists/) — чек-листы
+- [Checklists](checklists/) — чек-листы
 
-\- \[Test Cases](testcases/) — тест-кейсы
+- [Test Cases](testcases/) — тест-кейсы
 
-\- \[Bug Reports](bugs/) — баг-репорты
+- [Bug Reports](bugs/) — баг-репорты
 
-\- \[Techniques](techniques/) — техники тест-дизайна
+- [Techniques](techniques/) — техники тест-дизайна
 
-\- \[Screenshots](screenshots/) — скриншоты
+- [Screenshots](screenshots/) — скриншоты
 
-\- \[Diagrams](diagrams/) — диаграммы
+- [Diagrams](diagrams/) — диаграммы
 
