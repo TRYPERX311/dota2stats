@@ -19,3 +19,6 @@ def wl_from_match(m: dict, account_id: int) -> int | None:
     is_radiant = player_slot < 128
     return 1 if (radiant_win and is_radiant) or (not radiant_win and not is_radiant) else 0
 
+
+def winrate(wins: int, games: int) -> float:
+    return round(wins / games * 100, 2) if games else 0.0

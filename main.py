@@ -10,6 +10,7 @@ import steam_auth
 import collector
 from heroes import get_hero_name, get_hero_image_url
 from ranks import rank_to_str
+from utils import winrate as calc_winrate
 
 app = FastAPI(
     title="Dota 2 Stats",
@@ -37,10 +38,6 @@ def _current_user_id(request: Request) -> int:
     return int(user_id)
 
 
-def _winrate(wins: int, games: int) -> float:
-    return round(wins / games * 100, 2) if games else 0.0
-
-
 def _hero_rows_to_dict(rows, limit: int | None = None) -> list:
     if limit is not None:
         rows = rows[:limit]
@@ -52,7 +49,7 @@ def _hero_rows_to_dict(rows, limit: int | None = None) -> list:
             "hero_image": get_hero_image_url(h.hero_id),
             "games": h.games,
             "wins": h.wins,
-            "winrate": _winrate(h.wins, h.games),
+            "winrate": calc_winrate(h.wins, h.games),
         })
     return result
 
@@ -226,11 +223,11 @@ def _build_stats_payload(user_id: int):
             "games_total": stats.games_total or 0,
             "wins_total": stats.wins_total or 0,
             "losses_total": stats.losses_total or 0,
-            "winrate_total": _winrate(stats.wins_total or 0, stats.games_total or 0),
+            "winrate_total": calc_winrate(stats.wins_total or 0, stats.games_total or 0),
 
             "games_recent": stats.games_recent or 0,
             "wins_recent": stats.wins_recent or 0,
-            "winrate_recent": _winrate(stats.wins_recent or 0, stats.games_recent or 0),
+            "winrate_recent": calc_winrate(stats.wins_recent or 0, stats.games_recent or 0),
 
             "avg_kills": round(avg_kills, 2),
             "avg_deaths": round(avg_deaths, 2),
@@ -334,7 +331,7 @@ def recent_by_id(user_id: int):
         "recent": {
             "games": games,
             "wins": wins,
-            "winrate": _winrate(wins, games),
+            "winrate": calc_winrate(wins, games),
             "heroes": [
                 {
                     "hero_id": h["hero_id"],
@@ -342,7 +339,7 @@ def recent_by_id(user_id: int):
                     "hero_image": get_hero_image_url(h["hero_id"]),
                     "games": h["games"],
                     "wins": h["wins"],
-                    "winrate": _winrate(h["wins"], h["games"]),
+                    "winrate": calc_winrate(h["wins"], h["games"]),
                 }
                 for h in heroes_sorted
             ],
@@ -393,7 +390,7 @@ def patch_stats_by_id(user_id: int):
         "summary": {
             "games": games,
             "wins": wins,
-            "winrate": _winrate(wins, games),
+            "winrate": calc_winrate(wins, games),
         },
         "heroes_by_games": top_by_games,
         "heroes_by_winrate": top_by_winrate,
@@ -425,7 +422,7 @@ def peers_by_id(request: Request, user_id: int, limit: int = Query(5, ge=1, le=2
                 "avatar": p.peer_avatar,
                 "with_games": p.with_games,
                 "with_win": p.with_win,
-                "winrate": _winrate(p.with_win, p.with_games),
+                "winrate": calc_winrate(p.with_win, p.with_games),
                 "last_played": p.last_played.isoformat() if p.last_played else None,
             }
             for p in peers
