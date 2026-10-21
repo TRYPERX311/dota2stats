@@ -6,7 +6,6 @@
 
 ```mermaid
 flowchart TD
-
     subgraph EXTERNAL [Внешние системы]
         OpenDota[OpenDota API]
         Steam[Steam API]
@@ -30,7 +29,6 @@ flowchart TD
         Heroes[heroes.py]
     end
 
- 
     Main --> Auth
     Main --> DB
     Main --> Ranks
@@ -56,5 +54,5 @@ flowchart TD
     
     class Utils,Ranks,Heroes clean
     class Main,Auth,Collector,DB,OpenDotaClient,Scheduler dirty
-    class OpenDota,Steam,MySQL ext 
+    class OpenDota,Steam,MySQL_ext 
 ```
