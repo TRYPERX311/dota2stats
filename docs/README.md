@@ -19,3 +19,5 @@
 - [Diagrams](diagrams/) — диаграммы
 
 - [Metrics](metrics/) — метрики
+
+- [TestReport](TestReport.md) — отчет о тестировании
