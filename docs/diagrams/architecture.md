@@ -6,35 +6,38 @@
 
 ```mermaid
 flowchart TD
-    
+
     subgraph EXTERNAL [Внешние системы]
         OpenDota[OpenDota API]
         Steam[Steam API]
         MySQL[(MySQL БД)]
     end
 
-    %% === ТОЧКА ВХОДА ===
+
     Main[main.py\nFastAPI роутер]
+    Scheduler[collector_scheduler.py\nЗапуск раз в 6 часов]
     
-    
+
     Auth[steam_auth.py\nOpenID и профиль]
     Collector[collector.py\nСбор данных]
     DB[db.py\nМодели и сессии]
     OpenDotaClient[opendota.py\nКлиент API]
     
-    
+
     subgraph UTILS [Чистые утилиты]
         Utils[utils.py]
-        Positions[positions.py]
+        Ranks[ranks.py]
         Heroes[heroes.py]
     end
 
-    
+ 
     Main --> Auth
     Main --> DB
-    Main --> Positions
+    Main --> Ranks
     Main --> Heroes
     Main --> Utils
+    
+    Scheduler --> Collector
     
     Auth --> Steam
     
@@ -46,11 +49,12 @@ flowchart TD
     OpenDotaClient --> OpenDota
     DB --> MySQL
     
+
     classDef clean fill:#1e3a1e,stroke:#4caf50,stroke-width:2px,color:#fff
     classDef dirty fill:#3a1e1e,stroke:#f44336,stroke-width:2px,color:#fff
     classDef ext fill:#1e1e3a,stroke:#2196f3,stroke-width:1px,color:#fff
     
-    class Utils,Positions,Heroes clean
-    class Main,Auth,Collector,DB,OpenDotaClient dirty
-    class OpenDota,Steam,MySQL ext
+    class Utils,Ranks,Heroes clean
+    class Main,Auth,Collector,DB,OpenDotaClient,Scheduler dirty
+    class OpenDota,Steam,MySQL ext 
 ```

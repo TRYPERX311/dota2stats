@@ -2,7 +2,9 @@
 ## run() + sync_patches() + цикл по пользователям
 ```mermaid
 flowchart TD
-    Start([run: Начало сбора]) --> FetchPatches[/opendota.fetch_patches: Запрос к API/]
+    Scheduler([collector_scheduler: Каждые 6 часов]) --> Start([run: Начало сбора])
+    
+    Start --> FetchPatches[/opendota.fetch_patches: Запрос к API/]
     
     subgraph SYNC [sync_patches]
         FetchPatches --> CheckPatches{Патчи получены?}
@@ -31,4 +33,7 @@ flowchart TD
     
     NextUser --> Sleep[Sleep 2s]
     Sleep --> CheckUsers
+    
+    Stop --> Wait([Ждать 6 часов])
+    Wait --> Scheduler
 ```

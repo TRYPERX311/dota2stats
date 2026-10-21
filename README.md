@@ -57,7 +57,7 @@ cp .env.example .env
 # заполнить .env своими значениями
 docker compose up -d --build
 ```
-Приложение будет доступно по адресу http://localhost:5000.
+Приложение будет доступно по адресу http://localhost:80.
 ## Разработка
 - `main.py` — FastAPI-роуты
 - `collector.py` — сбор статистики из OpenDota
