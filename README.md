@@ -87,7 +87,7 @@ pytest tests -v
 - [Bug Reports](docs/bugs/)
 - [Test Report](docs/TestReport.md)
 ### API
-- **Swagger / API** — доступно локально по адресу `http://localhost:5000/docs` _(в dev-режиме)_.
+- **Swagger / API** — доступно локально по адресу `http://localhost:80/docs` _(в dev-режиме)_.
 ## Ссылки
 - **Прод:** http://45.86.245.140.nip.io/
 - **Репозиторий:** https://github.com/TRYPERX311/dota2stats
