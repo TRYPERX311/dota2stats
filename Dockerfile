@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 5000
 
 # По умолчанию — веб-приложение. Для collector команда переопределяется в compose.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--proxy-headers", "--forwarded-allow-ips", "*"]
