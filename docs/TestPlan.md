@@ -14,7 +14,7 @@
 
 Веб-приложение Dota 2 Stats — сервис для просмотра статистики игроков Dota 2 через OpenDota API.
 
-* **Прод:** http://45.86.245.140.nip.io/
+* **Прод:** https://dota2squad.ru/
 * **Репозиторий:** https://github.com/TRYPERX311/dota2stats
 * **Стек:** FastAPI, MySQL, Docker, GitHub Actions, HTML/CSS/JS
 
@@ -82,11 +82,11 @@
 
 ## 5. Окружения
 
-| Окружение  | URL                          | Назначение        | Доступ           |
-|------------|------------------------------|-------------------|------------------|
-| Production | http://45.86.245.140.nip.io/ | Smoke, регресс    | SSH на VPS       |
-| Local      | http://localhost:80          | Разработка        | Локально, Docker |
-| CI         | GitHub Actions               | Автозапуск тестов | Через GitHub     |
+| Окружение  | URL                    | Назначение        | Доступ           |
+|------------|------------------------|-------------------|------------------|
+| Production | https://dota2squad.ru/ | Smoke, регресс    | SSH на VPS       |
+| Local      | http://localhost:80    | Разработка        | Локально, Docker |
+| CI         | GitHub Actions         | Автозапуск тестов | Через GitHub     |
 
 ## 6. Критерии входа / выхода
 

@@ -89,7 +89,7 @@ pytest tests -v
 ### API
 - **Swagger / API** — доступно локально по адресу `http://localhost:80/docs` _(в dev-режиме)_.
 ## Ссылки
-- **Прод:** http://45.86.245.140.nip.io/
+- **Прод:** https://dota2squad.ru/
 - **Репозиторий:** https://github.com/TRYPERX311/dota2stats
 - **Автор:** [@TRYPERX311](https://github.com/TRYPERX311)
 
